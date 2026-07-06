@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arrow</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #00c877;
+      --green-dark: #00a362;
+      --green-light: rgba(0,200,119,0.13);
+      --amber: #f0a52a;
+      --amber-light: rgba(240,165,42,0.13);
+      --red: #d9363e;
+      --red-light: rgba(217,54,62,0.13);
+      --ink: #dce8f0;
+      --ink-mid: #8fb3cc;
+      --ink-muted: #6e8aa3;
+      --surface: #0c1018;
+      --card: #111822;
+      --border: #1a2535;
+      --border-strong: #243347;
+    }
+
+    body {
+      font-family: "Inter", "Segoe UI", Arial, sans-serif;
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.5;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      height: 48px;
+      background: var(--card);
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .topbar-title {
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    .topbar-sub {
+      font-size: 12px;
+      color: var(--ink-muted);
+    }
+
+    .topbar-run {
+      margin-left: auto;
+      height: 32px;
+      padding: 0 16px;
+      background: #1a3a6f;
+      color: #dce8f0;
+      border: 1px solid #2a5aaf;
+      border-radius: 0;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .topbar-run:hover { background: #1e4585; border-color: #3a6abf; }
+    .topbar-run:disabled { background: #111822; color: #384f64; border-color: #1a2535; cursor: default; }
+
+    /* ── Layout ── */
+    .app {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Left panel — chat ── */
+    .left {
+      background: var(--card);
+      border-right: 0.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Config status strip */
+    .config-strip {
+      padding: 8px 14px;
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+      background: var(--surface);
+    }
+
+    .config-pill {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      border: 0.5px solid var(--border-strong);
+      color: var(--ink-muted);
+      background: var(--card);
+    }
+
+    .config-pill.filled {
+      background: var(--green-light);
+      border-color: var(--green);
+      color: var(--green-dark);
+    }
+
+    /* Chat messages */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .msg {
+      max-width: 88%;
+      padding: 9px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .msg.assistant {
+      background: var(--surface);
+      color: var(--ink);
+      align-self: flex-start;
+      border-bottom-left-radius: 3px;
+    }
+
+    .msg.user {
+      background: #1a3a6f;
+      color: #dce8f0;
+      align-self: flex-end;
+      border-bottom-right-radius: 3px;
+    }
+
+    .msg.thinking {
+      background: var(--surface);
+      color: var(--ink-muted);
+      align-self: flex-start;
+      font-style: italic;
+    }
+
+    /* Chat input */
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 14px;
+      border-top: 0.5px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .chat-input {
+      flex: 1;
+      border: 0.5px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      resize: none;
+      outline: none;
+      line-height: 1.4;
+      max-height: 100px;
+      overflow-y: auto;
+      background: var(--card);
+      color: var(--ink);
+    }
+
+    .chat-input:focus {
+      border-color: #2a5aaf;
+      box-shadow: 0 0 0 2px rgba(26,111,255,0.15);
+    }
+
+    .chat-send {
+      height: 36px;
+      width: 36px;
+      background: #1a3a6f;
+      color: #dce8f0;
+      border: 1px solid #2a5aaf;
+      border-radius: 0;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      align-self: flex-end;
+    }
+
+    .chat-send:hover { background: #1e4585; }
+    .chat-send:disabled { background: #111822; color: #384f64; border-color: #1a2535; cursor: default; }
+
+    /* ── Right panel ── */
+    .right {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+    }
+
+    .right-top {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    /* Gate — center oval */
+    .gate-panel {
+      padding: 24px;
+      border-right: 0.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 220px;
+    }
+
+    .gate-ring {
+      width: 180px; height: 130px;
+      border-radius: 50%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 20px;
+      border: 2px solid;
+      transition: border-color 0.3s, background 0.3s;
+    }
+
+    .gate-ring.clear  { border-color: var(--green); background: var(--green-light); }
+    .gate-ring.unclear { border-color: var(--amber); background: var(--amber-light); }
+    .gate-ring.none   { border-color: var(--border-strong); background: var(--surface); }
+
+    .gate-action {
+      font-size: 13px; font-weight: 500; line-height: 1.3;
+      margin-bottom: 4px;
+    }
+
+    .gate-action.clear { color: var(--green-dark); }
+    .gate-action.unclear { color: var(--amber); }
+    .gate-action.none { color: var(--ink-muted); }
+
+    .gate-meta { font-size: 11px; color: var(--ink-muted); }
+
+    .gate-label {
+      font-size: 11px; color: var(--ink-muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    /* Action bars */
+    .bars-panel {
+      padding: 16px 20px;
+      overflow-y: auto;
+    }
+
+    .bars-label {
+      font-size: 11px; color: var(--ink-muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+
+    .action-bar-row {
+      margin-bottom: 10px;
+    }
+
+    .action-bar-row:last-child { margin-bottom: 0; }
+
+    .action-bar-top {
+      display: flex; justify-content: space-between;
+      align-items: baseline; margin-bottom: 3px;
+    }
+
+    .action-bar-name { font-size: 13px; color: var(--ink); }
+    .action-bar-name.top { font-weight: 500; }
+    .action-bar-j { font-size: 12px; color: var(--ink-muted); }
+    .action-bar-j.top { color: var(--green-dark); font-weight: 500; }
+
+    .bar-track {
+      height: 8px; background: #1a2535; border-radius: 2px; overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%; border-radius: 2px; background: var(--green);
+      transition: width 0.4s ease;
+    }
+
+    /* Bottom panels */
+    .right-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 0.5px solid var(--border);
+      overflow: hidden;
+    }
+
+    .bottom-panel {
+      padding: 14px 18px;
+      overflow-y: auto;
+    }
+
+    .bottom-panel + .bottom-panel {
+      border-left: 0.5px solid var(--border);
+    }
+
+    .panel-label {
+      font-size: 11px; color: var(--ink-muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    /* waterfall */
+    .wf-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .wf-row:last-child { border-bottom: none; }
+
+    .wf-row-label { font-size: 12px; color: var(--ink-muted); width: 110px; flex-shrink: 0; }
+
+    .wf-bars { display: flex; gap: 2px; flex: 1; }
+
+    .wf-bar {
+      height: 18px; border-radius: 2px;
+      display: flex; align-items: center; justify-content: flex-end;
+      padding: 0 5px; font-size: 10px; font-weight: 500;
+    }
+
+    .wf-delta { font-size: 12px; width: 48px; text-align: right; flex-shrink: 0; }
+    .wf-delta.pos { color: var(--green-dark); font-weight: 500; }
+    .wf-delta.neg { color: var(--red); font-weight: 500; }
+    .wf-delta.zero { color: var(--ink-muted); }
+
+    /* sensitivity */
+    .sens-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .sens-row:last-child { border-bottom: none; }
+
+    .sens-scenario { font-size: 12px; color: var(--ink-muted); flex: 1; }
+    .sens-top { font-size: 12px; color: var(--ink); font-weight: 500; flex: 1; }
+
+    .badge {
+      font-size: 10px; padding: 2px 7px; border-radius: 4px; flex-shrink: 0;
+    }
+
+    .badge.stable { background: var(--green-light); color: var(--green-dark); }
+    .badge.flip   { background: var(--red-light); color: var(--red); }
+    .badge.unclear-b { background: var(--amber-light); color: var(--amber); }
+
+    /* empty state */
+    .empty-state {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      height: 100%; color: var(--ink-muted);
+      font-size: 13px; gap: 6px; text-align: center; padding: 20px;
+    }
+
+    .empty-state .empty-icon { font-size: 24px; opacity: 0.4; }
+
+    .model-motif {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 14px;
+      font-size: 9px;
+      font-family: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    /* ── Arcet Scenario Demo (seeded demo data) ──
+       Styled to the Arcet shell design system: squared corners, 1px borders,
+       mono uppercase micro-labels (10px / 0.1em), muted surfaces. */
+    .demo-section {
+      padding: 10px 14px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      --font-mono: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+    }
+
+    .demo-label {
+      font-family: var(--font-mono, monospace);
+      font-size: 10px; color: var(--ink-muted);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .demo-tag {
+      font-family: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 9px; padding: 1px 7px; border-radius: 0;
+      border: 1px solid var(--amber); color: var(--amber); background: transparent;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+
+    .demo-select {
+      width: 100%; height: 30px;
+      background: #0e1620; color: var(--ink);
+      border: 1px solid var(--border-strong); border-radius: 0;
+      font-size: 12px; font-family: inherit; padding: 0 8px;
+      outline: none;
+      transition: border-color 120ms ease;
+    }
+
+    .demo-select:focus, .demo-select:hover { border-color: #2e4a6e; }
+
+    .demo-run-btn {
+      height: 30px; margin-top: 2px;
+      background: #1a3a6f; color: var(--ink);
+      border: 1px solid #2a5aaf; border-radius: 0;
+      font-size: 12px; font-family: inherit; cursor: pointer;
+      transition: border-color 120ms ease, background 120ms ease;
+    }
+
+    .demo-run-btn:hover { background: #1e4585; border-color: #3a6abf; }
+    .demo-run-btn:disabled { background: #111822; color: #384f64; border-color: #1a2535; cursor: default; }
+
+    .demo-status {
+      font-family: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 10px; color: var(--ink-muted); min-height: 14px;
+    }
+    .demo-status.error { color: var(--red); }
+
+    /* Demo results view: swaps into the right panel area while active. */
+    #demo-results { display: none; }
+    .right.demo-active .right-top,
+    .right.demo-active .right-bottom { display: none; }
+    .right.demo-active #demo-results {
+      display: block;
+      grid-row: 1 / -1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      background: var(--surface);
+    }
+
+    .demo-res-head {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+
+    .demo-res-overline {
+      font-family: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--ink-muted); display: block;
+    }
+    .demo-res-title { font-size: 13px; font-weight: 650; margin-top: 2px; }
+    .demo-res-close {
+      margin-left: auto; background: #0e1620; border: 1px solid var(--border-strong);
+      color: var(--ink-muted); font-size: 11px; padding: 5px 12px; cursor: pointer;
+      border-radius: 0; font-family: inherit;
+      transition: border-color 120ms ease, color 120ms ease;
+    }
+    .demo-res-close:hover { color: var(--ink); border-color: #2e4a6e; background: #18222e; }
+
+    .demo-rec-banner {
+      border: 1px solid var(--border-strong); border-left: 3px solid var(--green);
+      background: var(--card);
+      padding: 10px 14px; margin-bottom: 12px;
+    }
+    .demo-rec-banner.risk-medium { border-left-color: var(--amber); }
+    .demo-rec-banner.risk-high   { border-left-color: var(--red); }
+    .demo-rec-label {
+      font-family: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-muted);
+    }
+    .demo-rec-text  { font-size: 15px; font-weight: 650; margin-top: 3px; }
+
+    .demo-stat-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      border: 1px solid var(--border); margin-bottom: 12px;
+      background: var(--card);
+    }
+    .demo-stat { padding: 9px 12px; }
+    .demo-stat + .demo-stat { border-left: 1px solid var(--border); }
+    .demo-stat-v {
+      font-family: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 15px; color: var(--ink);
+    }
+    .demo-stat-k {
+      font-family: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 9px; color: var(--ink-muted);
+      text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px;
+    }
+
+    .demo-block { margin-bottom: 12px; }
+    .demo-block-label {
+      font-family: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 10px; color: var(--ink-muted);
+      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;
+      padding-bottom: 4px; border-bottom: 1px solid var(--border);
+    }
+
+    .demo-score-row { display: flex; align-items: center; gap: 10px; padding: 3px 0; }
+    .demo-score-name { font-size: 12px; color: var(--ink-mid); width: 150px; flex-shrink: 0; }
+    .demo-score-track { flex: 1; height: 6px; background: #1a2535; border-radius: 0; overflow: hidden; }
+    .demo-score-fill { height: 100%; background: #1a6fff; border-radius: 0; }
+    .demo-score-fill.risk { background: var(--amber); }
+    .demo-score-val {
+      font-family: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 11px; color: var(--ink-mid); width: 38px; text-align: right; flex-shrink: 0;
+    }
+
+    .demo-why-list { margin: 0; padding-left: 16px; }
+    .demo-why-list li { font-size: 12.5px; color: var(--ink); padding: 2px 0; }
+
+    .demo-next-action {
+      border: 1px solid var(--border-strong); border-left: 3px solid #1a6fff;
+      background: var(--card);
+      padding: 9px 12px; font-size: 12.5px;
+    }
+
+    .demo-ctx-counts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .demo-ctx-pill {
+      font-family: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 10px; padding: 2px 8px; border-radius: 0;
+      border: 1px solid var(--border-strong); color: var(--ink-mid); background: #0e1620;
+    }
+
+    .demo-ctx-detail summary {
+      font-family: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--ink-muted); cursor: pointer; padding: 3px 0;
+    }
+    .demo-ctx-detail summary:hover { color: var(--ink-mid); }
+    .demo-ctx-item {
+      font-size: 11.5px; color: var(--ink-mid); padding: 3px 0 3px 10px;
+      border-left: 2px solid var(--border-strong); margin: 4px 0;
+    }
+    .demo-ctx-item .demo-ctx-src {
+      font-family: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+      color: var(--ink-muted); font-size: 10px;
+    }
+
+    .demo-footer {
+      font-size: 10px; color: var(--ink-muted); border-top: 1px solid var(--border);
+      padding-top: 8px; margin-top: 6px;
+      font-family: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-title">Arrow</span>
+  <span class="topbar-sub" id="topbar-sub">configure an election on the left</span>
+  <button class="topbar-run" id="run-btn" onclick="runModel()">Run model →</button>
+</div>
+
+<div class="app">
+
+  <!-- LEFT PANEL — chat -->
+  <div class="left">
+
+    <!-- Config status pills -->
+    <div class="config-strip">
+      <span class="config-pill" id="pill-actor">actor</span>
+      <span class="config-pill" id="pill-objective">objective</span>
+      <span class="config-pill" id="pill-risk">risk</span>
+      <span class="config-pill" id="pill-actions">actions</span>
+    </div>
+
+    <!-- Arcet Scenario Demo (seeded demo data, deterministic, no LLM) -->
+    <div class="demo-section">
+      <div class="demo-label">Arcet Scenario Demo <span class="demo-tag">demo data</span></div>
+      <select class="demo-select" id="demo-candidate" title="Demo candidate"></select>
+      <select class="demo-select" id="demo-seat" title="Demo constituency"></select>
+      <select class="demo-select" id="demo-scenario" title="Scenario"></select>
+      <button class="demo-run-btn" id="demo-run-btn" onclick="runDemoScenario()">Run Scenario</button>
+      <div class="demo-status" id="demo-status"></div>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages" id="chat-messages"></div>
+
+    <!-- Input -->
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="chat-input" rows="1"
+        placeholder="Tell me about your election..."
+        onkeydown="handleKey(event)"></textarea>
+      <button class="chat-send" id="chat-send" onclick="sendMessage()">↑</button>
+    </div>
+
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right" id="right-panel">
+
+    <!-- Arcet demo results (shown only after Run Scenario; standard model panels return on close or on Run model) -->
+    <div id="demo-results"></div>
+
+    <div class="right-top">
+
+      <!-- Gate -->
+      <div class="gate-panel">
+        <div class="model-motif" aria-hidden="true">
+          <svg width="52" height="22" viewBox="0 0 52 22" fill="none">
+            <circle cx="4" cy="11" r="2.5" fill="#1a6fff" fill-opacity="0.7"/>
+            <circle cx="20" cy="5"  r="2"   fill="#1a6fff" fill-opacity="0.5"/>
+            <circle cx="20" cy="17" r="2"   fill="#1a6fff" fill-opacity="0.5"/>
+            <circle cx="38" cy="2"  r="1.5" fill="#00c877" fill-opacity="0.65"/>
+            <circle cx="38" cy="11" r="1.5" fill="#00c877" fill-opacity="0.65"/>
+            <circle cx="38" cy="20" r="1.5" fill="#00c877" fill-opacity="0.65"/>
+            <line x1="6.5"  y1="10"   x2="18"   y2="6"    stroke="#1a6fff" stroke-width="0.8" stroke-opacity="0.35"/>
+            <line x1="6.5"  y1="12"   x2="18"   y2="16"   stroke="#1a6fff" stroke-width="0.8" stroke-opacity="0.35"/>
+            <line x1="22"   y1="4.5"  x2="36.5" y2="3"    stroke="#6e8aa3" stroke-width="0.7" stroke-opacity="0.4"/>
+            <line x1="22"   y1="6"    x2="36.5" y2="10.5" stroke="#6e8aa3" stroke-width="0.7" stroke-opacity="0.4"/>
+            <line x1="22"   y1="16"   x2="36.5" y2="11.5" stroke="#6e8aa3" stroke-width="0.7" stroke-opacity="0.4"/>
+            <line x1="22"   y1="17.5" x2="36.5" y2="19.5" stroke="#6e8aa3" stroke-width="0.7" stroke-opacity="0.4"/>
+          </svg>
+          Monte Carlo · FPTP
+        </div>
+        <div class="gate-label">Recommendation</div>
+        <div class="gate-ring none" id="gate-ring">
+          <div class="gate-action none" id="gate-action">Run model to see recommendation</div>
+          <div class="gate-meta" id="gate-meta"></div>
+        </div>
+      </div>
+
+      <!-- Action bars -->
+      <div class="bars-panel">
+        <div class="bars-label">Ranked actions</div>
+        <div id="action-bars">
+          <div class="empty-state">
+            <div class="empty-icon">↑</div>
+            configure and run the model
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="right-bottom">
+
+      <!-- Decomposition -->
+      <div class="bottom-panel">
+        <div class="panel-label">Decomposition</div>
+        <div id="waterfall">
+          <div class="empty-state" style="height:80px">–</div>
+        </div>
+      </div>
+
+      <!-- Sensitivity -->
+      <div class="bottom-panel">
+        <div class="panel-label">Sensitivity</div>
+        <div id="sensitivity">
+          <div class="empty-state" style="height:80px">–</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  const API = "http://localhost:8000";
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  let history = [];
+  let config = {
+    actor: { name: null, districts: [], leaning: null },
+    objective: null,
+    risk: null,
+    actions: ["status_quo","allocate","reposition","mobilise","release_info","withdraw"],
+    private_overrides: {},
+  };
+
+  // ── Chat ───────────────────────────────────────────────────────────────────
+  function addMsg(role, text) {
+    const el = document.getElementById("chat-messages");
+    const div = document.createElement("div");
+    div.className = `msg ${role}`;
+    div.textContent = text;
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
+    return div;
+  }
+
+  function setThinking(on) {
+    const existing = document.getElementById("thinking-bubble");
+    if (on && !existing) {
+      const el = document.getElementById("chat-messages");
+      const div = document.createElement("div");
+      div.className = "msg thinking";
+      div.id = "thinking-bubble";
+      div.textContent = "thinking…";
+      el.appendChild(div);
+      el.scrollTop = el.scrollHeight;
+    } else if (!on && existing) {
+      existing.remove();
+    }
+  }
+
+  function handleKey(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById("chat-input");
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = "";
+    input.style.height = "auto";
+    addMsg("user", text);
+    history.push({ role: "user", content: text });
+
+    document.getElementById("chat-send").disabled = true;
+    setThinking(true);
+
+    try {
+      const res = await fetch(`${API}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, history: history.slice(0, -1), config }),
+      });
+
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      const data = await res.json();
+
+      setThinking(false);
+      addMsg("assistant", data.reply);
+      history.push({ role: "assistant", content: data.reply });
+
+      if (data.config) {
+        config = data.config;
+        updatePills();
+        updateTopbar();
+      }
+
+    } catch (err) {
+      setThinking(false);
+      addMsg("assistant", `Error: ${err.message}. Is the server running?`);
+    } finally {
+      document.getElementById("chat-send").disabled = false;
+      input.focus();
+    }
+  }
+
+  // ── Config pills ───────────────────────────────────────────────────────────
+  function updatePills() {
+    const filled = (id, val) => {
+      document.getElementById(id).classList.toggle("filled", !!val);
+    };
+    filled("pill-actor", config.actor?.name);
+    filled("pill-objective", config.objective);
+    filled("pill-risk", config.risk);
+    filled("pill-actions", config.actions?.length > 0);
+    const allFilled = !!(config.actor?.name && config.actor?.districts?.length && config.objective && config.risk && config.actions?.length > 0);
+    document.getElementById("run-btn").disabled = !allFilled;
+  }
+
+  // ── Topbar ─────────────────────────────────────────────────────────────────
+  function updateTopbar() {
+    const sub = document.getElementById("topbar-sub");
+    const name = config.actor?.name;
+    const ds = config.actor?.districts;
+    if (name && ds?.length) {
+      const distStr = ds.length > 3 ? `${ds.length} constituencies` : ds.join(", ");
+      sub.textContent = `${name}  ·  ${distStr}`;
+    } else if (name) {
+      sub.textContent = name;
+    } else {
+      sub.textContent = "configure an election on the left";
+    }
+  }
+
+  // ── Label helpers ────────────────────────────────────────────────────────
+  const ACTION_LABELS = {
+    "status_quo":             "Do nothing",
+    "allocate\u2192marginals":  "Concentrate resources",
+    "mobilise\u2192marginals":  "Mobilise voters",
+    "reposition\u2192centre":   "Reposition platform",
+    "publish_viability_poll": "Publish poll",
+  };
+  const SCENARIO_LABELS = {
+    "baseline":               "Baseline",
+    "polling_error_high":     "High polling error",
+    "tactical_propensity_low":"Voters more loyal",
+    "tactical_propensity_high":"Voters more tactical",
+    "transfer_rate_low":      "Weak vote transfers",
+  };
+  function humanLabel(l) { return ACTION_LABELS[l] || l; }
+  function humanScenario(s) { return SCENARIO_LABELS[s] || s; }
+
+  // ── Run model (calls pipeline) ─────────────────────────────────────────────
+  async function runModel() {
+    const btn = document.getElementById("run-btn");
+    btn.disabled = true;
+    btn.textContent = "Running…";
+
+    try {
+      const res = await fetch(`${API}/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ config }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || res.statusText);
+      }
+      const data = await res.json();
+      renderResults(data);
+
+      // Update topbar with seat count
+      const sub = document.getElementById("topbar-sub");
+      sub.textContent = `${data.actor}  ·  ${data.total_seats} seat${data.total_seats !== 1 ? "s" : ""}`;
+
+      // Ask LLM to explain results in chat
+      await explainResults(data);
+
+    } catch (err) {
+      addMsg("assistant", `Run failed: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Run model →";
+    }
+  }
+
+  async function explainResults(data) {
+    const ranked = data.actions.map((a, i) => `${i+1}. ${humanLabel(a.label)}`).join(", ");
+    const rec = data.gate.clear ? humanLabel(data.gate.recommended) : "no clear winner";
+    const stable = data.sensitivity.every(s => s.clear && s.top === data.sensitivity[0].top);
+    const decomp = data.decomposition;
+    const actorSeats = decomp.map(r => `${r.label}: ${r.seats[data.actor] ?? 0} seats`).join("; ");
+
+    const prompt = `The simulation just ran. Results:
+- Recommended action: ${rec} (confidence gap: ${data.gate.gap})
+- Ranked actions: ${ranked}
+- Actor's seats at each stage — ${actorSeats}
+- Sensitivity: ${stable ? "recommendation is stable across all tests" : "recommendation flips under some assumptions — treat as fragile"}
+
+In 3-4 plain English sentences, tell the user what they should do and why. No technical jargon (no J-scores, kappa, or decomposition terms).`;
+
+    setThinking(true);
+    try {
+      const res = await fetch(`${API}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: prompt, history, config }),
+      });
+      if (!res.ok) return;
+      const chatData = await res.json();
+      setThinking(false);
+      addMsg("assistant", chatData.reply);
+      history.push({ role: "user", content: prompt });
+      history.push({ role: "assistant", content: chatData.reply });
+    } catch {
+      setThinking(false);
+    }
+  }
+
+  // ── Render results ────────────────────────────────────────────────────────
+  const COLOR_PALETTE = [
+    ["#00c877","#d0fff2"],
+    ["#1a6fff","#c0d8ff"],
+    ["#f0a52a","#fff0d0"],
+    ["#d9363e","#ffd0d0"],
+  ];
+
+  function buildPartyColors(candidates) {
+    const m = {};
+    (candidates || []).forEach((c, i) => { m[c] = COLOR_PALETTE[i % COLOR_PALETTE.length]; });
+    return m;
+  }
+
+  function renderResults(d) {
+    exitDemoView(); // restore standard panels if the Arcet demo view is open
+    const partyColors = buildPartyColors(d.candidates);
+    const ring = document.getElementById("gate-ring");
+    const action = document.getElementById("gate-action");
+    const meta = document.getElementById("gate-meta");
+    if (d.gate.clear) {
+      ring.className = "gate-ring clear";
+      action.className = "gate-action clear";
+      action.textContent = humanLabel(d.gate.recommended);
+      meta.textContent = `confidence gap ${d.gate.gap.toFixed(2)}`;
+    } else {
+      ring.className = "gate-ring unclear";
+      action.className = "gate-action unclear";
+      action.textContent = "No clear best action";
+      meta.textContent = "top two options too close to call";
+    }
+
+    const barsEl = document.getElementById("action-bars");
+    barsEl.innerHTML = "";
+    const Jmax = Math.max(...d.actions.map(a => a.J));
+    const Jmin = Math.min(...d.actions.map(a => a.J));
+    d.actions.forEach((a, i) => {
+      const pct = Jmax > Jmin ? ((a.J - Jmin) / (Jmax - Jmin) * 100).toFixed(1) : 100;
+      const isTop = i === 0;
+      const rank = ["1st","2nd","3rd","4th","5th"][i] || `${i+1}th`;
+      barsEl.innerHTML += `
+        <div class="action-bar-row">
+          <div class="action-bar-top">
+            <span class="action-bar-name ${isTop?'top':''}">${humanLabel(a.label)}</span>
+            <span class="action-bar-j ${isTop?'top':''}">${rank}</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${pct}%;${!isTop?'opacity:0.3':''}"></div>
+          </div>
+        </div>`;
+    });
+
+    const wfEl = document.getElementById("waterfall");
+    wfEl.innerHTML = "";
+    const STAGE_LABELS = {
+      "baseline sincere": "Without tactical voting",
+      "after strategic voting": "With tactical voting",
+      "after action": "After recommended action",
+    };
+    d.decomposition.forEach((row, i) => {
+      const prev = i > 0 ? d.decomposition[i-1].seats : null;
+      const actorSeats = row.seats[d.actor] ?? 0;
+      const prevActorSeats = prev ? (prev[d.actor] ?? 0) : null;
+      const diff = prevActorSeats !== null ? actorSeats - prevActorSeats : null;
+      const deltaClass = diff === null ? "zero" : diff > 0 ? "pos" : diff < 0 ? "neg" : "zero";
+      const deltaText = diff === null ? "baseline" : (diff >= 0 ? "+" : "") + diff;
+      // Actor bar + single "Others" bar
+      const others = Object.entries(row.seats)
+        .filter(([p]) => p !== d.actor)
+        .reduce((s, [,n]) => s + n, 0);
+      const actorPct = (actorSeats / d.total_seats * 100).toFixed(0);
+      const othersPct = (others / d.total_seats * 100).toFixed(0);
+      const [fill, textCol] = partyColors[d.actor] || COLOR_PALETTE[0];
+      const barsHtml =
+        (actorSeats ? `<div class="wf-bar" style="width:${actorPct}%;background:${fill};color:${textCol}">${actorSeats}</div>` : "") +
+        (others     ? `<div class="wf-bar" style="width:${othersPct}%;background:#243347;color:#6e8aa3">${others}</div>` : "");
+      const stageLabel = STAGE_LABELS[row.label] || row.label;
+      wfEl.innerHTML += `
+        <div class="wf-row">
+          <span class="wf-row-label">${stageLabel}</span>
+          <div class="wf-bars">${barsHtml}</div>
+          <span class="wf-delta ${deltaClass}">${deltaText}</span>
+        </div>`;
+    });
+
+    const sensEl = document.getElementById("sensitivity");
+    sensEl.innerHTML = "";
+    const baseTop = d.sensitivity[0].top;
+    d.sensitivity.forEach(s => {
+      const flipped = s.top !== baseTop;
+      const badge = !s.clear
+        ? `<span class="badge unclear-b">unclear</span>`
+        : flipped ? `<span class="badge flip">flips</span>`
+                  : `<span class="badge stable">stable</span>`;
+      sensEl.innerHTML += `
+        <div class="sens-row">
+          <span class="sens-scenario">${humanScenario(s.scenario)}</span>
+          <span class="sens-top">${humanLabel(s.top)}</span>
+          ${badge}
+        </div>`;
+    });
+  }
+
+  // ── Arcet Scenario Demo (seeded demo data, deterministic, no LLM) ──────────
+  const DEMO_OFFLINE_MSG = "Arrow demo service offline. Start Arrow on port 8000.";
+
+  // Fallback lists so the controls render even when Arrow is offline.
+  const DEMO_FALLBACK = {
+    candidates: [
+      { id: "cand_a", name: "Amara Okafor",  party: "Green" },
+      { id: "cand_b", name: "David Renshaw", party: "Lab" },
+      { id: "cand_c", name: "Priya Sharma",  party: "Con" },
+    ],
+    seats: [
+      { code: "E14001131", name: "Bristol Central" },
+      { code: "E14001279", name: "Hendon" },
+      { code: "E14001113", name: "Bootle" },
+    ],
+  };
+
+  const DEMO_SCENARIOS = [
+    ["run_hard", "Run hard"],
+    ["run_soft", "Run soft"],
+    ["stand_aside", "Stand aside"],
+    ["change_candidate", "Change candidate"],
+    ["invest_more", "Invest more"],
+    ["decrease_resources", "Decrease resources"],
+    ["gather_more_data", "Gather more data"],
+  ];
+
+  function demoEsc(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  function fillDemoSelects(opts) {
+    document.getElementById("demo-candidate").innerHTML = opts.candidates.map(c =>
+      `<option value="${demoEsc(c.id)}">${demoEsc(c.name)} (${demoEsc(c.party)})</option>`).join("");
+    document.getElementById("demo-seat").innerHTML = opts.seats.map(s =>
+      `<option value="${demoEsc(s.code)}">${demoEsc(s.name)} · ${demoEsc(s.code)}</option>`).join("");
+    document.getElementById("demo-scenario").innerHTML = DEMO_SCENARIOS.map(([v, l]) =>
+      `<option value="${v}">${l}</option>`).join("");
+  }
+
+  async function initDemoOptions() {
+    fillDemoSelects(DEMO_FALLBACK);
+    try {
+      const res = await fetch(`${API}/demo/options`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.candidates?.length && data.seats?.length) {
+        fillDemoSelects({ candidates: data.candidates, seats: data.seats });
+      }
+    } catch { /* offline — fallback lists stay; Run Scenario reports offline */ }
+  }
+
+  function setDemoStatus(text, isError) {
+    const el = document.getElementById("demo-status");
+    el.textContent = text || "";
+    el.classList.toggle("error", !!isError);
+  }
+
+  function exitDemoView() {
+    document.getElementById("right-panel").classList.remove("demo-active");
+  }
+
+  async function runDemoScenario() {
+    const btn = document.getElementById("demo-run-btn");
+    const candidateId = document.getElementById("demo-candidate").value;
+    const seatCode = document.getElementById("demo-seat").value;
+    const scenario = document.getElementById("demo-scenario").value;
+    btn.disabled = true;
+
+    try {
+      setDemoStatus("1/3 · pulling stored Arcet context…");
+      let res = await fetch(`${API}/demo/context?candidateId=${encodeURIComponent(candidateId)}&seatCode=${encodeURIComponent(seatCode)}`);
+      if (!res.ok) throw new Error(`context request failed (${res.status})`);
+      const context = await res.json();
+
+      setDemoStatus("2/3 · scoring via Neural Signal Layer v0…");
+      res = await fetch(`${API}/demo/neural-signal/score`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ candidateId, seatCode, context }),
+      });
+      if (!res.ok) throw new Error(`neural-signal request failed (${res.status})`);
+      const scores = await res.json();
+
+      setDemoStatus("3/3 · running Arrow FPTP simulation…");
+      res = await fetch(`${API}/demo/run-scenario`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ candidateId, seatCode, scenario }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `run-scenario request failed (${res.status})`);
+      }
+      const result = await res.json();
+
+      renderDemoResults(context, scores, result);
+      setDemoStatus("");
+    } catch (err) {
+      // TypeError from fetch = network failure = Arrow not running.
+      const offline = err instanceof TypeError;
+      setDemoStatus(offline ? DEMO_OFFLINE_MSG : `Demo error: ${err.message}`, true);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function renderDemoResults(context, scores, r) {
+    const cu = r.contextUsed || {};
+    const cand = cu.candidate || context.candidate || {};
+    const seat = cu.seat || context.seat || {};
+    const wp = (r.winProbability * 100).toFixed(0) + "%";
+    const range = (r.expectedVoteShareRange || [])
+      .map(v => (v * 100).toFixed(1) + "%").join(" – ");
+    const riskCls = r.riskLevel === "high" ? "risk-high" : r.riskLevel === "medium" ? "risk-medium" : "";
+
+    const scoreBar = (name, val, risk) => `
+      <div class="demo-score-row">
+        <span class="demo-score-name">${name}</span>
+        <div class="demo-score-track"><div class="demo-score-fill ${risk ? "risk" : ""}" style="width:${Math.round(val * 100)}%"></div></div>
+        <span class="demo-score-val">${val.toFixed(2)}</span>
+      </div>`;
+
+    const signals = context.relevantSignals || [];
+    const risks = context.risks || [];
+    const rels = context.relationships || [];
+    const events = context.recentEvents || [];
+    const mems = context.memoryRecords || [];
+
+    const ctxDetail = (label, items, fmt) => items.length ? `
+      <details class="demo-ctx-detail">
+        <summary>${label} (${items.length})</summary>
+        ${items.map(x => `<div class="demo-ctx-item">${fmt(x)}</div>`).join("")}
+      </details>` : "";
+
+    document.getElementById("demo-results").innerHTML = `
+      <div class="demo-res-head">
+        <div>
+          <span class="demo-res-overline">Arcet scenario result</span>
+          <div class="demo-res-title">${demoEsc(cand.name)} (${demoEsc(cand.party)}) · ${demoEsc(seat.name)} · ${demoEsc((r.scenarioRequested || "").toLowerCase().replace(/_/g, " "))}</div>
+        </div>
+        <span class="demo-tag">demo data</span>
+        <button class="demo-res-close" onclick="exitDemoView()">× close</button>
+      </div>
+
+      <div class="demo-rec-banner ${riskCls}">
+        <div class="demo-rec-label">Arrow recommendation</div>
+        <div class="demo-rec-text">${demoEsc(r.recommendation)}</div>
+      </div>
+
+      <div class="demo-stat-grid">
+        <div class="demo-stat"><div class="demo-stat-v">${wp}</div><div class="demo-stat-k">Win probability</div></div>
+        <div class="demo-stat"><div class="demo-stat-v">${range}</div><div class="demo-stat-k">Vote share range</div></div>
+        <div class="demo-stat"><div class="demo-stat-v">${demoEsc(r.riskLevel)}</div><div class="demo-stat-k">Risk level</div></div>
+        <div class="demo-stat"><div class="demo-stat-v">${demoEsc(r.confidence)}</div><div class="demo-stat-k">Confidence</div></div>
+      </div>
+
+      <div class="demo-block">
+        <div class="demo-block-label">Neural Signal scores · ${demoEsc(scores.modelVersion)}</div>
+        ${scoreBar("Candidate strength", scores.candidateStrength)}
+        ${scoreBar("Local fit", scores.localFit)}
+        ${scoreBar("Stakeholder support", scores.stakeholderSupport)}
+        ${scoreBar("Media risk", scores.mediaRisk, true)}
+        ${scoreBar("Faction risk", scores.factionRisk, true)}
+        <div class="demo-score-row">
+          <span class="demo-score-name">Performance delta</span>
+          <span style="font-size:12px">${scores.performanceDelta > 0 ? "+" : ""}${demoEsc(scores.performanceDelta)} pts vs party baseline</span>
+        </div>
+      </div>
+
+      <div class="demo-block">
+        <div class="demo-block-label">Why</div>
+        <ul class="demo-why-list">${(r.why || []).map(w => `<li>${demoEsc(w)}</li>`).join("")}</ul>
+      </div>
+
+      <div class="demo-block">
+        <div class="demo-block-label">Next action</div>
+        <div class="demo-next-action">${demoEsc(r.nextAction)}</div>
+      </div>
+
+      <div class="demo-block">
+        <div class="demo-block-label">Context pulled from Arcet memory</div>
+        <div class="demo-ctx-counts">
+          <span class="demo-ctx-pill">${signals.length} signals</span>
+          <span class="demo-ctx-pill">${rels.length} relationships</span>
+          <span class="demo-ctx-pill">${risks.length} risks</span>
+          <span class="demo-ctx-pill">${events.length} events</span>
+          <span class="demo-ctx-pill">${mems.length} memory records</span>
+        </div>
+        ${ctxDetail("Signals", signals, s =>
+          `${demoEsc(s.summary)} <span class="demo-ctx-src">· ${demoEsc(s.source)} · ${demoEsc(s.date)}</span>`)}
+        ${ctxDetail("Relationships", rels, x =>
+          `${demoEsc(x.entity)} — ${demoEsc(x.stance)} <span class="demo-ctx-src">· ${demoEsc(x.note)}</span>`)}
+        ${ctxDetail("Risks", risks, x =>
+          `[${demoEsc(x.severity)}] ${demoEsc(x.summary)}`)}
+        ${ctxDetail("Recent events", events, x =>
+          `${demoEsc(x.summary)} <span class="demo-ctx-src">· ${demoEsc(x.date)}</span>`)}
+        ${ctxDetail("Memory records", mems, x =>
+          `${demoEsc(x.content)} <span class="demo-ctx-src">· ${demoEsc(x.type)}</span>`)}
+      </div>
+
+      <div class="demo-footer">
+        ${demoEsc(scores.modelVersion)} · ${demoEsc(r.engine)} · scenario ${demoEsc(r.scenarioRequested)}
+        (engine preferred: ${demoEsc(r.engineScenario)}) · history: ${demoEsc(cu.electionHistorySource)}
+        · realOrDemo: ${demoEsc(r.realOrDemo)}
+      </div>`;
+
+    document.getElementById("right-panel").classList.add("demo-active");
+    document.getElementById("demo-results").scrollTop = 0;
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  addMsg("assistant", "Hi — tell me about your election. Who are you, and which seat are you going for?");
+  initDemoOptions();
+</script>
+</body>
+</html>

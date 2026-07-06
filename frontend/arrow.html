@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Arcet — Arrow</title>
+  <style>
+    /* Design tokens mirror arcet2/frontend/index.html — keep in sync with the workspace. */
+    :root {
+      --bg: #090d10;
+      --panel: #0d1216;
+      --panel-2: #11171b;
+      --line: #1c272d;
+      --line-strong: #2a373d;
+      --text: #d2dadd;
+      --muted: #77868c;
+      --quiet: #4f5e64;
+      --cyan: #6d9fa6;
+      --cyan-dim: #355c62;
+      --lime: #8ca66b;
+      --amber: #c49b62;
+      --red: #bd6c68;
+      --blue: #718ca5;
+      --top: 52px;
+      --mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body { background: var(--bg); color: var(--text); font-size: 13px; }
+    button, select { font: inherit; color: inherit; }
+    button:focus-visible, select:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+    .app { display: flex; flex-direction: column; width: 100%; height: 100%; }
+
+    /* ── Top bar ── */
+    .app-bar {
+      flex: 0 0 var(--top);
+      display: flex;
+      align-items: stretch;
+      background: #0b1116;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 18px; border-right: 1px solid var(--line);
+      letter-spacing: .12em; font-size: 15px; font-weight: 700;
+    }
+    .meta-block {
+      min-width: 142px; display: flex; flex-direction: column; justify-content: center;
+      padding: 0 14px; border-right: 1px solid var(--line);
+    }
+    .meta-label { margin-bottom: 4px; color: var(--muted); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+    .meta-value { white-space: nowrap; font-size: 12px; }
+    .bar-spacer { flex: 1; }
+    .bar-actions { display: flex; align-items: center; gap: 8px; padding: 0 14px; border-left: 1px solid var(--line); }
+
+    .tiny-button {
+      height: 25px; padding: 0 10px;
+      border: 1px solid #27343a; border-radius: 1px;
+      background: #10171b; color: #87969b;
+      font-size: 10px; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: border-color 120ms ease, color 120ms ease;
+    }
+    .tiny-button:hover { border-color: #4a646d; color: var(--text); }
+    .tiny-button.primary { color: #c6d3d5; background: #263b40; border-color: #375159; font-weight: 500; }
+    .tiny-button.primary:hover { border-color: #4a646d; }
+    .tiny-button:disabled { color: var(--quiet); background: #0d1216; border-color: #1c272d; cursor: default; }
+
+    /* ── Layout ── */
+    .main { flex: 1; display: grid; grid-template-columns: 300px 1fr; min-height: 0; }
+
+    /* ── Config panel ── */
+    .config-panel {
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+      display: flex; flex-direction: column;
+      overflow-y: auto; scrollbar-color: #34464f transparent; scrollbar-width: thin;
+    }
+    .panel-header {
+      min-height: 29px; display: flex; align-items: center; gap: 6px;
+      padding: 0 12px; background: #0f161a; border-bottom: 1px solid var(--line);
+    }
+    .panel-kicker { width: 5px; height: 5px; border-radius: 50%; background: var(--cyan); }
+    .panel-title { flex: 1; font-size: 11px; font-weight: 650; letter-spacing: .04em; }
+    .panel-state { color: var(--quiet); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+
+    .config-section { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    .section-label { margin-bottom: 7px; color: var(--muted); font-size: 9px; letter-spacing: .09em; text-transform: uppercase; }
+
+    .field { margin-bottom: 9px; }
+    .field:last-child { margin-bottom: 0; }
+    .field-label { margin-bottom: 4px; color: var(--quiet); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+    .field select {
+      width: 100%; height: 27px; padding: 0 6px;
+      background: #10171b; border: 1px solid #27343a; border-radius: 1px;
+      color: var(--text); font-size: 11px; cursor: pointer;
+    }
+    .field select:hover { border-color: #3b4c53; }
+    .field select option { background: #10181d; }
+
+    .run-button { width: 100%; height: 27px; justify-content: center; font-size: 11px; }
+
+    .run-status { margin-top: 8px; min-height: 13px; color: var(--muted); font-family: var(--mono); font-size: 9px; }
+    .run-status.error { color: var(--red); }
+
+    .panel-note {
+      margin-top: auto;
+      padding: 9px 12px; color: var(--muted); font-size: 9px; line-height: 1.5;
+      background: #0b1217; border-top: 1px solid var(--line);
+    }
+
+    .demo-chip {
+      display: inline-block; padding: 3px 6px; border: 1px solid #4a3f32; border-radius: 2px;
+      color: var(--amber); background: #1d1914; font-size: 9px; letter-spacing: .06em; text-transform: uppercase;
+    }
+
+    /* ── Results canvas ── */
+    .results {
+      min-width: 0; overflow-y: auto;
+      scrollbar-color: #34464f transparent; scrollbar-width: thin;
+      background: var(--bg);
+    }
+    .results-inner { max-width: 760px; padding: 0 0 30px; }
+
+    .empty-note {
+      display: flex; flex-direction: column; gap: 6px;
+      padding: 40px 24px; color: var(--muted); font-size: 11px;
+    }
+    .empty-note .hint { color: var(--quiet); font-size: 10px; }
+
+    .result-identity { padding: 14px 18px 11px; border-bottom: 1px solid var(--line); }
+    .result-type { color: var(--cyan); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+    .result-name { margin: 4px 0 3px; color: #e2ecee; font-size: 17px; font-weight: 650; }
+    .result-sub { color: var(--muted); font-size: 10px; }
+
+    .result-section { padding: 10px 18px; border-bottom: 1px solid var(--line); }
+
+    .recommendation { display: flex; align-items: baseline; gap: 10px; padding: 2px 0 2px 10px; border-left: 2px solid var(--lime); }
+    .recommendation.risk-medium { border-left-color: var(--amber); }
+    .recommendation.risk-high { border-left-color: var(--red); }
+    .recommendation-text { color: #e2ecee; font-size: 15px; font-weight: 650; }
+
+    .metric-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .metric { padding: 8px; background: #0d151a; }
+    .metric-value { color: #d6e2e4; font-size: 12px; font-family: var(--mono); }
+    .metric-label { margin-top: 3px; color: var(--quiet); font-size: 8px; text-transform: uppercase; letter-spacing: .06em; }
+
+    .score-row { display: flex; align-items: center; gap: 9px; padding: 4px 0; }
+    .score-name { width: 150px; flex-shrink: 0; color: #a8b7bc; font-size: 10.5px; }
+    .score-track { flex: 1; height: 3px; background: #27343a; }
+    .score-fill { height: 100%; background: var(--cyan); }
+    .score-fill.risk { background: var(--amber); }
+    .score-value { width: 34px; flex-shrink: 0; text-align: right; color: var(--muted); font-family: var(--mono); font-size: 9.5px; }
+    .score-meta { margin-top: 6px; color: var(--quiet); font-family: var(--mono); font-size: 9px; }
+
+    .why-list { margin: 0; padding: 0; list-style: none; }
+    .why-list li { padding: 5px 0; color: #a8b7bc; font-size: 10.5px; line-height: 1.45; border-bottom: 1px solid #172329; }
+    .why-list li:last-child { border-bottom: 0; }
+
+    .next-action { padding: 2px 0 2px 10px; border-left: 2px solid var(--cyan); color: #c8d6d8; font-size: 10.5px; line-height: 1.45; }
+
+    .chip-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+    .count-chip {
+      padding: 3px 6px; border: 1px solid #27343a; border-radius: 2px;
+      color: #87969b; background: #10171b; font-size: 9px;
+    }
+
+    details.ctx-group summary {
+      padding: 4px 0; color: var(--muted); font-size: 9px; letter-spacing: .08em;
+      text-transform: uppercase; cursor: pointer;
+    }
+    details.ctx-group summary:hover { color: #a8b7bc; }
+    .ctx-list { margin: 0; padding: 0; list-style: none; }
+    .ctx-list li {
+      display: flex; justify-content: space-between; gap: 10px;
+      padding: 5px 0; color: #a8b7bc; font-size: 9.5px; line-height: 1.4;
+      border-bottom: 1px solid #172329;
+    }
+    .ctx-list li:last-child { border-bottom: 0; }
+    .ctx-list .ctx-meta { flex-shrink: 0; color: var(--quiet); font-family: var(--mono); font-size: 8.5px; white-space: nowrap; }
+
+    .result-footer { padding: 10px 18px; color: var(--quiet); font-family: var(--mono); font-size: 9px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header class="app-bar">
+    <div class="brand">ARCET</div>
+    <div class="meta-block">
+      <span class="meta-label">Module</span>
+      <span class="meta-value">Arrow · scenario simulation</span>
+    </div>
+    <div class="meta-block">
+      <span class="meta-label">Mode</span>
+      <span class="meta-value">Arcet Signal Demo</span>
+    </div>
+    <div class="bar-spacer"></div>
+    <div class="bar-actions">
+      <span class="demo-chip">demo data</span>
+      <a class="tiny-button" href="index.html">← Back to workspace</a>
+    </div>
+  </header>
+
+  <div class="main">
+
+    <!-- Scenario configuration -->
+    <aside class="config-panel" aria-label="Arrow scenario configuration">
+      <div class="panel-header">
+        <i class="panel-kicker"></i>
+        <span class="panel-title">Arrow Scenario</span>
+        <span class="panel-state">Demo</span>
+      </div>
+
+      <div class="config-section">
+        <div class="section-label">Inputs</div>
+        <div class="field">
+          <div class="field-label">Candidate</div>
+          <select id="candidateSelect"></select>
+        </div>
+        <div class="field">
+          <div class="field-label">Constituency</div>
+          <select id="seatSelect"></select>
+        </div>
+        <div class="field">
+          <div class="field-label">Scenario</div>
+          <select id="scenarioSelect"></select>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <button class="tiny-button primary run-button" id="runButton" type="button">Run Scenario</button>
+        <div class="run-status" id="runStatus"></div>
+      </div>
+
+      <div class="panel-note">
+        Seeded demo intelligence · deterministic pipeline · no live data.
+        Context and scores come from the Arrow service on port 8000
+        (stored context → Neural Signal Layer v0 → FPTP Monte Carlo).
+      </div>
+    </aside>
+
+    <!-- Results -->
+    <section class="results" aria-label="Arrow scenario result" aria-live="polite">
+      <div class="results-inner" id="resultsInner">
+        <div class="empty-note">
+          <span>Select a candidate, constituency, and scenario, then run.</span>
+          <span class="hint">Arrow pulls stored Arcet demo context, scores it through Neural Signal Layer v0, and simulates the scenario with the FPTP Monte Carlo engine.</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+  const ARROW_API = 'http://localhost:8000';
+  const OFFLINE_MESSAGE = 'Arrow demo service offline. Start Arrow on port 8000.';
+
+  // Fallback lists so the panel renders even when Arrow is offline.
+  const FALLBACK_OPTIONS = {
+    candidates: [
+      { id: 'cand_a', name: 'Amara Okafor', party: 'Green' },
+      { id: 'cand_b', name: 'David Renshaw', party: 'Lab' },
+      { id: 'cand_c', name: 'Priya Sharma', party: 'Con' },
+    ],
+    seats: [
+      { code: 'E14001131', name: 'Bristol Central' },
+      { code: 'E14001279', name: 'Hendon' },
+      { code: 'E14001113', name: 'Bootle' },
+    ],
+  };
+
+  const SCENARIOS = [
+    ['run_hard', 'Run hard'],
+    ['run_soft', 'Run soft'],
+    ['stand_aside', 'Stand aside'],
+    ['change_candidate', 'Change candidate'],
+    ['invest_more', 'Invest more'],
+    ['decrease_resources', 'Decrease resources'],
+    ['gather_more_data', 'Gather more data'],
+  ];
+
+  const $ = selector => document.querySelector(selector);
+
+  function esc(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function fillSelects(options) {
+    $('#candidateSelect').innerHTML = options.candidates.map(c =>
+      `<option value="${esc(c.id)}">${esc(c.name)} (${esc(c.party)})</option>`).join('');
+    $('#seatSelect').innerHTML = options.seats.map(s =>
+      `<option value="${esc(s.code)}">${esc(s.name)} · ${esc(s.code)}</option>`).join('');
+    $('#scenarioSelect').innerHTML = SCENARIOS.map(([value, label]) =>
+      `<option value="${value}">${label}</option>`).join('');
+  }
+
+  async function initOptions() {
+    fillSelects(FALLBACK_OPTIONS);
+    try {
+      const res = await fetch(`${ARROW_API}/demo/options`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.candidates?.length && data.seats?.length) {
+        fillSelects({ candidates: data.candidates, seats: data.seats });
+      }
+    } catch { /* offline — fallback lists stay; Run reports offline */ }
+  }
+
+  function setStatus(text, isError) {
+    const el = $('#runStatus');
+    el.textContent = text || '';
+    el.classList.toggle('error', Boolean(isError));
+  }
+
+  async function runScenario() {
+    const button = $('#runButton');
+    const candidateId = $('#candidateSelect').value;
+    const seatCode = $('#seatSelect').value;
+    const scenario = $('#scenarioSelect').value;
+    button.disabled = true;
+
+    try {
+      setStatus('1/3 pulling stored context');
+      let res = await fetch(`${ARROW_API}/demo/context?candidateId=${encodeURIComponent(candidateId)}&seatCode=${encodeURIComponent(seatCode)}`);
+      if (!res.ok) throw new Error(`context request failed (${res.status})`);
+      const context = await res.json();
+
+      setStatus('2/3 scoring via neural signal v0');
+      res = await fetch(`${ARROW_API}/demo/neural-signal/score`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidateId, seatCode, context }),
+      });
+      if (!res.ok) throw new Error(`neural-signal request failed (${res.status})`);
+      const scores = await res.json();
+
+      setStatus('3/3 running fptp simulation');
+      res = await fetch(`${ARROW_API}/demo/run-scenario`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidateId, seatCode, scenario }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `run-scenario request failed (${res.status})`);
+      }
+      const result = await res.json();
+
+      renderResult(context, scores, result);
+      setStatus('');
+    } catch (err) {
+      // TypeError from fetch means the network call itself failed: Arrow is not running.
+      const offline = err instanceof TypeError;
+      setStatus(offline ? OFFLINE_MESSAGE : `error · ${err.message}`, true);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function renderResult(context, scores, r) {
+    const used = r.contextUsed || {};
+    const candidate = used.candidate || context.candidate || {};
+    const seat = used.seat || context.seat || {};
+    const scenarioLabel = String(r.scenarioRequested || '').toLowerCase().replace(/_/g, ' ');
+    const winProbability = `${Math.round(r.winProbability * 100)}%`;
+    const shareRange = (r.expectedVoteShareRange || [])
+      .map(v => `${(v * 100).toFixed(1)}%`).join(' – ');
+    const riskClass = r.riskLevel === 'high' ? 'risk-high' : r.riskLevel === 'medium' ? 'risk-medium' : '';
+
+    const scoreRow = (name, value, isRisk) => `
+      <div class="score-row">
+        <span class="score-name">${name}</span>
+        <div class="score-track"><div class="score-fill ${isRisk ? 'risk' : ''}" style="width:${Math.round(value * 100)}%"></div></div>
+        <span class="score-value">${value.toFixed(2)}</span>
+      </div>`;
+
+    const signals = context.relevantSignals || [];
+    const relationships = context.relationships || [];
+    const risks = context.risks || [];
+    const events = context.recentEvents || [];
+    const memories = context.memoryRecords || [];
+
+    const contextGroup = (label, items, fmt) => items.length ? `
+      <details class="ctx-group">
+        <summary>${label} · ${items.length}</summary>
+        <ul class="ctx-list">${items.map(item => `<li>${fmt(item)}</li>`).join('')}</ul>
+      </details>` : '';
+
+    $('#resultsInner').innerHTML = `
+      <div class="result-identity">
+        <div class="result-type"><span>Arrow scenario result</span><span class="demo-chip">demo data</span></div>
+        <div class="result-name">${esc(candidate.name)} (${esc(candidate.party)}) · ${esc(seat.name)}</div>
+        <div class="result-sub">Scenario: ${esc(scenarioLabel)} · seat ${esc(seat.code)}</div>
+      </div>
+
+      <div class="result-section">
+        <div class="section-label">Recommendation</div>
+        <div class="recommendation ${riskClass}">
+          <span class="recommendation-text">${esc(r.recommendation)}</span>
+        </div>
+      </div>
+
+      <div class="result-section">
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-value">${winProbability}</div><div class="metric-label">Win probability</div></div>
+          <div class="metric"><div class="metric-value">${shareRange}</div><div class="metric-label">Vote share range</div></div>
+          <div class="metric"><div class="metric-value">${esc(r.riskLevel)}</div><div class="metric-label">Risk level</div></div>
+          <div class="metric"><div class="metric-value">${esc(r.confidence)}</div><div class="metric-label">Confidence</div></div>
+        </div>
+      </div>
+
+      <div class="result-section">
+        <div class="section-label">Neural signal scores</div>
+        ${scoreRow('Candidate strength', scores.candidateStrength)}
+        ${scoreRow('Local fit', scores.localFit)}
+        ${scoreRow('Stakeholder support', scores.stakeholderSupport)}
+        ${scoreRow('Media risk', scores.mediaRisk, true)}
+        ${scoreRow('Faction risk', scores.factionRisk, true)}
+        <div class="score-meta">performance delta ${scores.performanceDelta > 0 ? '+' : ''}${esc(scores.performanceDelta)} pts vs party baseline · ${esc(scores.modelVersion)}</div>
+      </div>
+
+      <div class="result-section">
+        <div class="section-label">Why</div>
+        <ul class="why-list">${(r.why || []).map(reason => `<li>${esc(reason)}</li>`).join('')}</ul>
+      </div>
+
+      <div class="result-section">
+        <div class="section-label">Recommended next action</div>
+        <div class="next-action">${esc(r.nextAction)}</div>
+      </div>
+
+      <div class="result-section">
+        <div class="section-label">Context pulled from Arcet memory</div>
+        <div class="chip-row">
+          <span class="count-chip">${signals.length} signals</span>
+          <span class="count-chip">${relationships.length} relationships</span>
+          <span class="count-chip">${risks.length} risks</span>
+          <span class="count-chip">${events.length} events</span>
+          <span class="count-chip">${memories.length} memory records</span>
+        </div>
+        ${contextGroup('Signals', signals, s =>
+          `<span>${esc(s.summary)}</span><span class="ctx-meta">${esc(s.source)} · ${esc(s.date)}</span>`)}
+        ${contextGroup('Relationships', relationships, rel =>
+          `<span>${esc(rel.entity)} — ${esc(rel.stance)}</span><span class="ctx-meta">${esc(rel.kind)}</span>`)}
+        ${contextGroup('Risks', risks, risk =>
+          `<span>${esc(risk.summary)}</span><span class="ctx-meta">${esc(risk.severity)}</span>`)}
+        ${contextGroup('Recent events', events, e =>
+          `<span>${esc(e.summary)}</span><span class="ctx-meta">${esc(e.date)}</span>`)}
+        ${contextGroup('Memory records', memories, m =>
+          `<span>${esc(m.content)}</span><span class="ctx-meta">${esc(m.type)}</span>`)}
+      </div>
+
+      <div class="result-footer">
+        ${esc(scores.modelVersion)} · ${esc(r.engine)} · scenario ${esc(r.scenarioRequested)}
+        (engine preferred ${esc(r.engineScenario)}) · history ${esc(used.electionHistorySource)}
+        · realOrDemo ${esc(r.realOrDemo)}
+      </div>`;
+
+    $('.results').scrollTop = 0;
+  }
+
+  $('#runButton').addEventListener('click', runScenario);
+  initOptions();
+</script>
+</body>
+</html>

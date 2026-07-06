@@ -1,0 +1,1 @@
+{"_comment": "Example evidence item — delete this line in real cases. One JSON object per line.", "evidence_id": "ev-0001", "source_id": "src-0001", "text": "Verbatim or lightly cleaned excerpt from the source.", "event_time": "1990-11-01T00:00:00Z", "knowledge_time": "1990-11-02T08:00:00Z", "source_type": "contemporaneous_news", "manual": false}

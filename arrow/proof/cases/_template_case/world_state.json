@@ -1,0 +1,9 @@
+{
+  "_comment": "Placeholder for Phase 2 world systems. Structure will be defined then; only the envelope is fixed now.",
+  "case_id": "_template_case",
+  "as_of": null,
+  "actors": [],
+  "relations": [],
+  "institutions": [],
+  "pressures": []
+}

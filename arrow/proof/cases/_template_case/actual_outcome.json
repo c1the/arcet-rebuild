@@ -1,0 +1,9 @@
+{
+  "_comment": "HIDDEN until forecast_output.json is locked. Leave placeholder values until then.",
+  "case_id": "_template_case",
+  "outcome_class": null,
+  "resolution_date": null,
+  "resolution_evidence": "",
+  "recorded_at": null,
+  "recorded_by": null
+}

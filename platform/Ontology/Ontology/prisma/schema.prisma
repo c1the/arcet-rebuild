@@ -1,0 +1,1145 @@
+// =============================================================================
+// Arcet Political Ontology — Prisma schema
+// =============================================================================
+// Design decisions (read before editing):
+//
+// 1. One base `Entity` table provides identity, search, permissions and graph
+//    compatibility for every political object. Typed *Profile tables hold the
+//    type-specific fields and link 1:1 to Entity via a unique `entityId`.
+//
+// 2. The graph is relational-as-graph. Edges (`Relationship`) and "soft pointers"
+//    (e.g. `primaryOrganisationId`, `partyEntityId`, `currentRepresentativeEntityId`)
+//    are stored as indexed UUID columns and resolved in the service layer rather
+//    than as formal Prisma relations. This is deliberate: formalising every
+//    cross-entity reference against the single `Entity` table produces an
+//    explosion of named back-relations and makes the schema unreadable. Every
+//    such column is documented and indexed. Referential integrity for soft
+//    pointers is enforced in the service layer.
+//
+// 3. Formal Prisma relations are used only where they are structurally
+//    unambiguous: profile<->entity (1:1), and the pure join/child tables
+//    (EntityEvidence, RelationshipEvidence, EventParticipant, RiskLink,
+//    ComplianceFlag).
+//
+// 4. Field and enum names follow the coding brief verbatim so downstream
+//    modules (FPTP simulator, candidate selection) bind to the same identifiers.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum EntityType {
+  PERSON
+  ORGANISATION
+  CONSTITUENCY
+  CANDIDATE
+  FACTION
+  ISSUE
+  POLICY
+  EVENT
+  ACTION
+  RISK
+  SOURCE
+  ELECTION
+  SCENARIO
+}
+
+enum EntityStatus {
+  ACTIVE
+  ARCHIVED
+  DRAFT
+  NEEDS_REVIEW
+}
+
+enum Visibility {
+  PUBLIC_CONTEXT
+  CLIENT_PRIVATE
+  RESTRICTED
+  COMPLIANCE_ONLY
+}
+
+enum PersonType {
+  POLITICIAN
+  CANDIDATE
+  ADVISER
+  STAFF
+  STAKEHOLDER
+  JOURNALIST
+  DONOR
+  LOCAL_PARTY_OFFICER
+  ACTIVIST
+  CAMPAIGN_TEAM
+  PUBLIC_OFFICIAL
+  OTHER
+}
+
+enum OrganisationType {
+  POLITICAL_PARTY
+  LOCAL_PARTY_ASSOCIATION
+  CAMPAIGN_GROUP
+  CHARITY
+  UNION
+  BUSINESS
+  MEDIA_OUTLET
+  THINK_TANK
+  LOCAL_AUTHORITY
+  PUBLIC_BODY
+  COMMUNITY_ORGANISATION
+  DONOR_ORGANISATION
+  OTHER
+}
+
+enum TargetStatus {
+  SAFE
+  LIKELY
+  LEAN
+  MARGINAL
+  TARGET
+  LONG_SHOT
+  UNWINNABLE
+  UNKNOWN
+}
+
+enum StrategicPriority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  MONITOR_ONLY
+}
+
+enum CandidateStatus {
+  PROSPECTIVE
+  LONG_LISTED
+  SHORT_LISTED
+  SELECTED
+  REJECTED
+  WITHDRAWN
+  INCUMBENT
+  UNDER_REVIEW
+}
+
+enum VettingStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  CLEARED
+  NEEDS_REVIEW
+  FAILED
+  UNKNOWN
+}
+
+enum FactionType {
+  IDEOLOGICAL
+  REGIONAL
+  LOCAL_ASSOCIATION
+  LEADERSHIP_CAMP
+  CANDIDATE_SELECTION_BLOC
+  DONOR_NETWORK
+  ISSUE_BASED
+  UNKNOWN
+}
+
+enum LeadershipAlignment {
+  SUPPORTIVE
+  NEUTRAL
+  SCEPTICAL
+  HOSTILE
+  UNKNOWN
+}
+
+enum FactionMood {
+  CALM
+  WATCHING
+  AGITATED
+  HOSTILE
+  UNKNOWN
+}
+
+enum IssueCategory {
+  ECONOMY
+  HEALTH
+  HOUSING
+  TRANSPORT
+  EDUCATION
+  IMMIGRATION
+  CRIME
+  ENVIRONMENT
+  DEFENCE
+  LOCAL_SERVICES
+  PLANNING
+  TAX
+  WELFARE
+  CONSTITUTIONAL
+  OTHER
+}
+
+enum PolicyStatus {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  ANNOUNCED
+  WITHDRAWN
+  ARCHIVED
+}
+
+enum RelationshipType {
+  KNOWS
+  INFLUENCES
+  SUPPORTS
+  OPPOSES
+  ADVISES
+  WORKS_FOR
+  REPRESENTS
+  BELONGS_TO
+  FUNDS
+  OWES_COMMITMENT_TO
+  HAS_ACCESS_TO
+  CONTROLS_ACCESS_TO
+  ALLY_OF
+  RIVAL_OF
+  HOSTILE_TO
+  INTERESTED_IN
+  AFFECTED_BY
+  RESPONSIBLE_FOR
+  OWNS_RELATIONSHIP_WITH
+  MATTERS_TO_CONSTITUENCY
+  ASSOCIATED_WITH_ISSUE
+  SUPPORTS_POLICY
+  OPPOSES_POLICY
+  MEMBER_OF_FACTION
+  LEANING_TOWARD_FACTION
+  BROKER_FOR
+  EVIDENCED_BY
+  OTHER
+}
+
+enum RelationshipDirection {
+  DIRECTED
+  UNDIRECTED
+}
+
+enum Attitude {
+  SUPPORTIVE
+  NEUTRAL
+  MIXED
+  SCEPTICAL
+  HOSTILE
+  UNKNOWN
+}
+
+enum InfluenceLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+  UNKNOWN
+}
+
+enum Confidence {
+  LOW
+  MEDIUM
+  HIGH
+  CONFIRMED
+}
+
+enum EvidenceRole {
+  SUPPORTS
+  CONTRADICTS
+  UPDATES
+  WEAK_SIGNAL
+  HUMAN_CONFIRMED
+}
+
+enum SourceType {
+  PUBLIC_ARTICLE
+  MEETING_NOTE
+  EMAIL
+  CALL_NOTE
+  USER_NOTE
+  PUBLIC_RECORD
+  ELECTION_RESULT
+  POLLING
+  SOCIAL_POST
+  DOCUMENT
+  MANUAL_ENTRY
+  MODEL_INFERENCE
+  OTHER
+}
+
+enum Reliability {
+  LOW
+  MEDIUM
+  HIGH
+  OFFICIAL
+  UNKNOWN
+}
+
+enum DataClassification {
+  PUBLIC
+  CLIENT_PRIVATE
+  PERSONAL_DATA
+  SENSITIVE_PERSONAL_DATA
+  SPECIAL_CATEGORY_RISK
+  INFERRED_DATA
+  RESTRICTED
+  COMPLIANCE_ONLY
+}
+
+enum EventType {
+  MEETING
+  CALL
+  EMAIL
+  PUBLIC_STATEMENT
+  ENDORSEMENT
+  DONATION
+  PRESS_ARTICLE
+  SELECTION_EVENT
+  POLICY_ANNOUNCEMENT
+  CAMPAIGN_VISIT
+  CONTROVERSY
+  VOTE
+  DEBATE
+  LOCAL_INCIDENT
+  RELATIONSHIP_UPDATE
+  RISK_UPDATE
+  ACTION_COMPLETED
+  OTHER
+}
+
+enum ParticipantRole {
+  ATTENDEE
+  HOST
+  SUBJECT
+  MENTIONED
+  AUTHOR
+  TARGET
+  DECISION_MAKER
+  OBSERVER
+  OTHER
+}
+
+enum RiskType {
+  CANDIDATE_RISK
+  CONSTITUENCY_RISK
+  FACTION_RISK
+  RELATIONSHIP_RISK
+  POLICY_RISK
+  MEDIA_RISK
+  COMPLIANCE_RISK
+  DONOR_RISK
+  LOCAL_ASSOCIATION_RISK
+  FPTP_STRATEGY_RISK
+  DATA_QUALITY_RISK
+  OTHER
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum Likelihood {
+  UNLIKELY
+  POSSIBLE
+  LIKELY
+  VERY_LIKELY
+  UNKNOWN
+}
+
+enum Urgency {
+  LOW
+  MEDIUM
+  HIGH
+  IMMEDIATE
+}
+
+enum RiskStatus {
+  OPEN
+  MONITORING
+  MITIGATING
+  RESOLVED
+  DISMISSED
+}
+
+enum RiskLinkRole {
+  PRIMARY_SUBJECT
+  AFFECTED
+  CAUSE
+  MITIGATION_OWNER
+  RELATED
+  EVIDENCE_SUBJECT
+}
+
+enum ScoreType {
+  CANDIDATE_READINESS
+  CANDIDATE_SEAT_FIT
+  LOCAL_CONNECTION
+  MEDIA_READINESS
+  STAKEHOLDER_STRENGTH
+  LOCAL_ASSOCIATION_SUPPORT
+  FACTION_ACCEPTABILITY
+  ISSUE_CREDIBILITY
+  CAMPAIGN_CAPACITY
+  CANDIDATE_RISK
+  CONSTITUENCY_COMPETITIVENESS
+  FPTP_WIN_PROBABILITY
+  FPTP_STRATEGIC_VALUE
+  SPOILER_RISK
+  TACTICAL_VOTING_RISK
+  POLICY_BLAST_RADIUS
+  STAKEHOLDER_RISK
+  FACTION_RISK
+  MEDIA_RISK
+  COMPLIANCE_RISK
+  RELATIONSHIP_STRENGTH
+  RELATIONSHIP_DECAY
+  OTHER
+}
+
+enum FPTPScenarioType {
+  RUN_HARD
+  RUN_SOFT
+  STAND_ASIDE
+  CHANGE_CANDIDATE
+  INCREASE_RESOURCES
+  DECREASE_RESOURCES
+  GATHER_MORE_DATA
+}
+
+enum FPTPRecommendationLabel {
+  COMPETE_HARD
+  COMPETE_SELECTIVELY
+  SYMBOLIC_RUN
+  STAND_ASIDE
+  DO_NOT_INVEST
+  CHANGE_CANDIDATE
+  GATHER_MORE_DATA
+  ESCALATE_TO_STRATEGIST
+}
+
+enum PolicyImpactType {
+  AFFECTS_CONSTITUENCY
+  AFFECTS_CANDIDATE
+  AFFECTS_STAKEHOLDER
+  AFFECTS_FACTION
+  AFFECTS_MEDIA
+  AFFECTS_COMPLIANCE
+  AFFECTS_DONOR
+  AFFECTS_LOCAL_ASSOCIATION
+  OTHER
+}
+
+enum ImpactDirection {
+  POSITIVE
+  NEGATIVE
+  MIXED
+  UNKNOWN
+}
+
+enum ActionType {
+  CALL
+  EMAIL
+  MEET
+  BRIEF
+  FOLLOW_UP
+  REPAIR_RELATIONSHIP
+  ASSIGN_RELATIONSHIP_OWNER
+  CONDUCT_VETTING
+  STRENGTHEN_LOCAL_LINKS
+  MEET_LOCAL_ASSOCIATION
+  PREPARE_MEDIA_TRAINING
+  ADDRESS_VULNERABILITY
+  COMPARE_CANDIDATES
+  GATHER_LOCAL_DATA
+  INCREASE_CAMPAIGN_EFFORT
+  DECREASE_CAMPAIGN_EFFORT
+  CHECK_MANIFESTO_CONSISTENCY
+  PREPARE_REBUTTAL
+  DELAY_ANNOUNCEMENT
+  ESCALATE_COMPLIANCE_REVIEW
+  CONSULT_FACTION_BROKER
+  CHECK_IMPRINT
+  CHECK_SPEND_CLASSIFICATION
+  CHECK_DONATION_ISSUE
+  REQUIRE_APPROVAL
+  OTHER
+}
+
+enum ActionPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ActionStatus {
+  DRAFT
+  RECOMMENDED
+  ASSIGNED
+  IN_PROGRESS
+  NEEDS_REVIEW
+  APPROVED
+  BLOCKED
+  COMPLETED
+  DISMISSED
+}
+
+enum ApprovalRequirement {
+  NONE
+  SENIOR_REVIEW
+  COMPLIANCE_REVIEW
+  LEGAL_REVIEW
+  CANDIDATE_APPROVAL
+  PARTY_APPROVAL
+}
+
+enum ComplianceFlagType {
+  PERSONAL_DATA
+  SENSITIVE_DATA
+  SPECIAL_CATEGORY_RISK
+  INFERRED_POLITICAL_OPINION
+  RESTRICTED_SOURCE
+  CONTACT_RESTRICTION
+  DIGITAL_IMPRINT_REQUIRED
+  REGULATED_SPEND_RISK
+  DONATION_REVIEW_REQUIRED
+  LEGAL_REVIEW_REQUIRED
+  DATA_RETENTION_REVIEW
+  OTHER
+}
+
+enum ComplianceFlagStatus {
+  OPEN
+  IN_REVIEW
+  CLEARED
+  ESCALATED
+  RESOLVED
+}
+
+// =============================================================================
+// BASE ENTITY
+// =============================================================================
+
+model Entity {
+  id              String       @id @default(uuid())
+  type            EntityType
+  displayName     String
+  canonicalName   String?
+  slug            String       @unique
+  description     String?
+  status          EntityStatus @default(ACTIVE)
+  visibility      Visibility   @default(CLIENT_PRIVATE)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  archivedAt      DateTime?
+  createdByUserId String?
+  updatedByUserId String?
+  metadata        Json?
+
+  // 1:1 typed profiles (only one of these is populated per entity)
+  personProfile       PersonProfile?
+  organisationProfile OrganisationProfile?
+  constituencyProfile ConstituencyProfile?
+  candidateProfile    CandidateProfile?
+  factionProfile      FactionProfile?
+  issueProfile        IssueProfile?
+  policyProfile       PolicyProfile?
+  eventProfile        PoliticalEvent?
+  riskProfile         Risk?
+
+  // child / join collections
+  evidenceLinks      EntityEvidence[]
+  riskLinks          RiskLink[]
+  eventParticipation EventParticipant[]
+  complianceFlags    ComplianceFlag[]
+
+  @@index([type])
+  @@index([status])
+  @@index([visibility])
+  @@index([canonicalName])
+  @@index([displayName])
+}
+
+// =============================================================================
+// TYPED PROFILES
+// =============================================================================
+
+model PersonProfile {
+  id                    String      @id @default(uuid())
+  entityId              String      @unique
+  entity                Entity      @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  firstName             String?
+  lastName              String?
+  honorific             String?
+  roleTitle             String?
+  personType            PersonType  @default(OTHER)
+  // soft pointers -> Entity ids (resolved in service layer)
+  primaryOrganisationId String?
+  primaryConstituencyId String?
+  primaryFactionId      String?
+  publicBio             String?
+  privateNotes          String?
+  publicProfileUrl      String?
+  email                 String?
+  phone                 String?
+  isPolitician          Boolean     @default(false)
+  isCandidate           Boolean     @default(false)
+  isStakeholder         Boolean     @default(false)
+  isJournalist          Boolean     @default(false)
+  isDonor               Boolean     @default(false)
+  isAdviser             Boolean     @default(false)
+  isLocalPartyFigure    Boolean     @default(false)
+  riskLevel             InfluenceLevel @default(UNKNOWN)
+  confidence            Confidence  @default(LOW)
+  sourceSummary         String?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@index([personType])
+  @@index([primaryOrganisationId])
+  @@index([primaryConstituencyId])
+  @@index([primaryFactionId])
+}
+
+model OrganisationProfile {
+  id                   String           @id @default(uuid())
+  entityId             String           @unique
+  entity               Entity           @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  organisationType     OrganisationType @default(OTHER)
+  website              String?
+  geography            String?
+  // soft pointers -> Entity ids
+  primaryConstituencyId String?
+  parentOrganisationId  String?
+  description          String?
+  issueFocus           String[]
+  politicalRelevance   InfluenceLevel   @default(UNKNOWN)
+  riskLevel            InfluenceLevel   @default(UNKNOWN)
+  confidence           Confidence       @default(LOW)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  @@index([organisationType])
+  @@index([primaryConstituencyId])
+  @@index([parentOrganisationId])
+}
+
+model ConstituencyProfile {
+  id                            String             @id @default(uuid())
+  entityId                      String             @unique
+  entity                        Entity             @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  name                          String
+  region                        String?
+  country                       String?
+  // soft pointers -> Entity ids
+  currentRepresentativeEntityId String?
+  incumbentPartyEntityId        String?
+  previousWinningPartyEntityId  String?
+  targetStatus                  TargetStatus       @default(UNKNOWN)
+  strategicPriority             StrategicPriority  @default(MEDIUM)
+  localPartyStrength            Int?               // 1..5
+  campaignReadiness             Int?               // 1..5
+  stakeholderCoverageScore      Float?             // 0..100
+  localIssueVolatility          Int?               // 1..5
+  tacticalVotingRisk            Int?               // 1..5
+  spoilerRisk                   Int?               // 1..5
+  overallCompetitiveness        Float?             // 0..100
+  notes                         String?
+  createdAt                     DateTime           @default(now())
+  updatedAt                     DateTime           @updatedAt
+
+  @@index([targetStatus])
+  @@index([strategicPriority])
+}
+
+model CandidateProfile {
+  id                          String          @id @default(uuid())
+  entityId                    String          @unique
+  entity                      Entity          @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  // soft pointers -> Entity ids
+  personEntityId              String?
+  currentTargetConstituencyId String?
+  partyEntityId               String?
+  candidateStatus             CandidateStatus @default(PROSPECTIVE)
+  politicalExperienceScore    Float?          // 0..100
+  localConnectionScore        Float?
+  mediaReadinessScore         Float?
+  stakeholderStrengthScore    Float?
+  localAssociationSupportScore Float?
+  factionAcceptabilityScore   Float?
+  issueCredibilityScore       Float?
+  campaignCapacityScore       Float?
+  riskScore                   Float?
+  developmentPotentialScore   Float?
+  overallReadinessScore       Float?
+  summary                     String?
+  strengths                   String[]
+  weaknesses                  String[]
+  developmentNeeds            String[]
+  vettingStatus               VettingStatus   @default(NOT_STARTED)
+  createdAt                   DateTime        @default(now())
+  updatedAt                   DateTime        @updatedAt
+
+  @@index([candidateStatus])
+  @@index([personEntityId])
+  @@index([currentTargetConstituencyId])
+  @@index([partyEntityId])
+}
+
+model FactionProfile {
+  id                  String              @id @default(uuid())
+  entityId            String              @unique
+  entity              Entity              @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  name                String
+  description         String?
+  factionType         FactionType         @default(UNKNOWN)
+  influenceScore      Float?              // 0..100
+  leadershipAlignment LeadershipAlignment @default(UNKNOWN)
+  currentMood         FactionMood         @default(UNKNOWN)
+  riskLevel           InfluenceLevel      @default(UNKNOWN)
+  confidence          Confidence          @default(LOW)
+  notes               String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([factionType])
+}
+
+model IssueProfile {
+  id                    String        @id @default(uuid())
+  entityId              String        @unique
+  entity                Entity        @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  name                  String
+  issueCategory         IssueCategory @default(OTHER)
+  nationalRelevance     Int?          // 1..5
+  localRelevance        Int?          // 1..5
+  mediaSensitivity      Int?          // 1..5
+  factionSensitivity    Int?          // 1..5
+  complianceSensitivity Int?          // 1..5
+  description           String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([issueCategory])
+}
+
+model PolicyProfile {
+  id                    String       @id @default(uuid())
+  entityId              String       @unique
+  entity                Entity       @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  title                 String
+  policyText            String?
+  summary               String?
+  issueEntityIds        String[]     // soft pointers -> Entity ids of ISSUEs
+  policyStatus          PolicyStatus @default(DRAFT)
+  announcementDate      DateTime?
+  ownerEntityId         String?      // soft pointer -> Entity id
+  overallPoliticalRisk  Severity     @default(LOW)
+  overallComplianceRisk Severity     @default(LOW)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  @@index([policyStatus])
+  @@index([ownerEntityId])
+}
+
+// =============================================================================
+// RELATIONSHIP GRAPH
+// =============================================================================
+
+model Relationship {
+  id                        String                @id @default(uuid())
+  // graph edge endpoints — indexed UUID columns, resolved in service layer
+  sourceEntityId            String
+  targetEntityId            String
+  type                      RelationshipType
+  direction                 RelationshipDirection @default(DIRECTED)
+  strength                  Int                   @default(3) // 1..5
+  attitude                  Attitude              @default(UNKNOWN)
+  influenceLevel            InfluenceLevel        @default(UNKNOWN)
+  confidence                Confidence            @default(LOW)
+  visibility                Visibility            @default(CLIENT_PRIVATE)
+  relationshipOwnerUserId   String?
+  relationshipOwnerEntityId String?
+  lastInteractionAt         DateTime?
+  validFrom                 DateTime?
+  validTo                   DateTime?
+  isCurrent                 Boolean               @default(true)
+  summary                   String?
+  privateNotes              String?
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
+  createdByUserId           String?
+  updatedByUserId           String?
+
+  evidenceLinks RelationshipEvidence[]
+
+  @@index([sourceEntityId])
+  @@index([targetEntityId])
+  @@index([type])
+  @@index([isCurrent])
+  @@index([lastInteractionAt])
+  @@index([sourceEntityId, type])
+  @@index([targetEntityId, type])
+}
+
+model RelationshipEvidence {
+  id             String        @id @default(uuid())
+  relationshipId String
+  relationship   Relationship  @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
+  evidenceId     String
+  evidence       EvidenceSource @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  evidenceRole   EvidenceRole  @default(SUPPORTS)
+  createdAt      DateTime      @default(now())
+
+  @@unique([relationshipId, evidenceId])
+  @@index([evidenceId])
+}
+
+// =============================================================================
+// EVIDENCE / SOURCES
+// =============================================================================
+
+model EvidenceSource {
+  id                 String             @id @default(uuid())
+  title              String
+  sourceType         SourceType         @default(MANUAL_ENTRY)
+  url                String?
+  fileId             String?
+  rawText            String?
+  summary            String?
+  sourceDate         DateTime?
+  observedAt         DateTime?
+  addedByUserId      String?
+  reliability        Reliability        @default(UNKNOWN)
+  visibility         Visibility         @default(CLIENT_PRIVATE)
+  dataClassification DataClassification @default(CLIENT_PRIVATE)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  entityLinks       EntityEvidence[]
+  relationshipLinks RelationshipEvidence[]
+
+  @@index([sourceType])
+  @@index([dataClassification])
+  @@index([reliability])
+}
+
+model EntityEvidence {
+  id           String         @id @default(uuid())
+  entityId     String
+  entity       Entity         @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  evidenceId   String
+  evidence     EvidenceSource @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  evidenceRole EvidenceRole   @default(SUPPORTS)
+  createdAt    DateTime       @default(now())
+
+  @@unique([entityId, evidenceId])
+  @@index([evidenceId])
+}
+
+// =============================================================================
+// EVENTS (temporal layer)
+// =============================================================================
+
+model PoliticalEvent {
+  id                  String     @id @default(uuid())
+  entityId            String     @unique // event's own base Entity (type EVENT)
+  entity              Entity     @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  eventType           EventType  @default(OTHER)
+  title               String
+  summary             String?
+  occurredAt          DateTime
+  location            String?
+  constituencyEntityId String?   // soft pointer
+  issueEntityId        String?   // soft pointer
+  sourceEvidenceId     String?   // soft pointer -> EvidenceSource
+  confidence           Confidence @default(LOW)
+  visibility           Visibility @default(CLIENT_PRIVATE)
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+
+  participants EventParticipant[]
+
+  @@index([eventType])
+  @@index([occurredAt])
+  @@index([constituencyEntityId])
+  @@index([issueEntityId])
+}
+
+model EventParticipant {
+  id              String          @id @default(uuid())
+  eventId         String
+  event           PoliticalEvent  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  entityId        String
+  entity          Entity          @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  participantRole ParticipantRole @default(ATTENDEE)
+  createdAt       DateTime        @default(now())
+
+  @@unique([eventId, entityId, participantRole])
+  @@index([entityId])
+}
+
+// =============================================================================
+// RISK
+// =============================================================================
+
+model Risk {
+  id           String     @id @default(uuid())
+  entityId     String     @unique // risk's own base Entity (type RISK)
+  entity       Entity     @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  riskType     RiskType
+  title        String
+  description  String?
+  severity     Severity   @default(MEDIUM)
+  likelihood   Likelihood @default(UNKNOWN)
+  urgency      Urgency    @default(MEDIUM)
+  status       RiskStatus @default(OPEN)
+  confidence   Confidence @default(LOW)
+  ownerUserId  String?
+  sourceModule String?
+  rationale    String?
+  mitigation   String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  links RiskLink[]
+
+  @@index([riskType])
+  @@index([status])
+  @@index([severity])
+  @@index([sourceModule])
+}
+
+model RiskLink {
+  id        String       @id @default(uuid())
+  riskId    String
+  risk      Risk         @relation(fields: [riskId], references: [id], onDelete: Cascade)
+  entityId  String
+  entity    Entity       @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  role      RiskLinkRole @default(AFFECTED)
+  createdAt DateTime     @default(now())
+
+  @@unique([riskId, entityId, role])
+  @@index([entityId])
+}
+
+// =============================================================================
+// SCORE (generic, shared scoring infrastructure)
+// =============================================================================
+
+model Score {
+  id              String     @id @default(uuid())
+  subjectEntityId String     // indexed UUID column
+  contextEntityId String?    // e.g. the constituency a candidate score is "for"
+  scoreType       ScoreType
+  value           Float
+  scaleMin        Float      @default(0)
+  scaleMax        Float      @default(100)
+  confidence      Confidence @default(LOW)
+  sourceModule    String?
+  modelVersion    String?
+  rationale       String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([subjectEntityId])
+  @@index([contextEntityId])
+  @@index([scoreType])
+  @@index([subjectEntityId, scoreType])
+  @@index([subjectEntityId, contextEntityId, scoreType])
+}
+
+// =============================================================================
+// CANDIDATE-SEAT ASSESSMENT (bridge between candidate selection and FPTP)
+// =============================================================================
+
+model CandidateSeatAssessment {
+  id                          String   @id @default(uuid())
+  candidateEntityId           String
+  constituencyEntityId        String
+  assessmentDate              DateTime @default(now())
+  overallFitScore             Float?
+  readinessScore              Float?
+  localConnectionScore        Float?
+  stakeholderCoverageScore    Float?
+  localAssociationSupportScore Float?
+  factionAcceptabilityScore   Float?
+  mediaReadinessScore         Float?
+  issueCredibilityScore       Float?
+  riskScore                   Float?
+  developmentPotentialScore   Float?
+  summary                     String?
+  topStrengths                String[]
+  topWeaknesses               String[]
+  recommendedActions          String[]
+  evidenceSummary             String?
+  confidence                  Confidence @default(LOW)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  @@index([candidateEntityId])
+  @@index([constituencyEntityId])
+  @@index([candidateEntityId, constituencyEntityId])
+}
+
+// =============================================================================
+// FPTP DATA STRUCTURES (consumed/written by the FPTP module — not computed here)
+// =============================================================================
+
+model ElectionResult {
+  id                   String   @id @default(uuid())
+  constituencyEntityId String
+  electionDate         DateTime
+  partyEntityId        String?
+  candidateEntityId    String?
+  votes                Int
+  voteShare            Float    // 0..100
+  position             Int
+  turnout              Float?   // 0..100
+  sourceEvidenceId     String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([constituencyEntityId])
+  @@index([electionDate])
+  @@index([constituencyEntityId, electionDate])
+}
+
+model FPTPScenario {
+  id                       String                  @id @default(uuid())
+  constituencyEntityId     String
+  candidateEntityId        String?
+  scenarioType             FPTPScenarioType
+  title                    String
+  assumptions              Json?
+  estimatedWinProbability  Float?                  // 0..1
+  estimatedVoteShareLow    Float?                  // 0..100
+  estimatedVoteShareMid    Float?
+  estimatedVoteShareHigh   Float?
+  strategicValueScore      Float?                  // 0..100
+  resourceWasteRisk        Float?                  // 0..100
+  spoilerRisk              Float?
+  tacticalVotingRisk       Float?
+  localPartyImpact         String?
+  stakeholderImpact        String?
+  candidateDevelopmentValue Float?
+  futureElectionValue      Float?
+  recommendationLabel      FPTPRecommendationLabel?
+  rationale                String?
+  confidence               Confidence              @default(LOW)
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+
+  @@index([constituencyEntityId])
+  @@index([candidateEntityId])
+  @@index([scenarioType])
+}
+
+// =============================================================================
+// POLICY RADIUS
+// =============================================================================
+
+model PolicyImpact {
+  id                  String          @id @default(uuid())
+  policyEntityId      String
+  affectedEntityId    String
+  impactType          PolicyImpactType
+  impactDirection     ImpactDirection @default(UNKNOWN)
+  severity            Severity        @default(MEDIUM)
+  confidence          Confidence      @default(LOW)
+  rationale           String?
+  recommendedActionId String?         // soft pointer -> ActionRecommendation
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@index([policyEntityId])
+  @@index([affectedEntityId])
+  @@index([impactType])
+}
+
+// =============================================================================
+// ACTION RECOMMENDATION
+// =============================================================================
+
+model ActionRecommendation {
+  id                    String              @id @default(uuid())
+  title                 String
+  description           String?
+  actionType            ActionType
+  priority              ActionPriority      @default(MEDIUM)
+  status                ActionStatus        @default(RECOMMENDED)
+  targetEntityId        String?
+  ownerUserId           String?
+  ownerEntityId         String?
+  dueDate               DateTime?
+  sourceModule          String?
+  rationale             String?
+  expectedBenefit       String?
+  downsideIfIgnored     String?
+  approvalRequirement   ApprovalRequirement @default(NONE)
+  relatedRiskId         String?
+  relatedScenarioId     String?
+  relatedPolicyImpactId String?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  completedAt           DateTime?
+
+  @@index([status])
+  @@index([priority])
+  @@index([targetEntityId])
+  @@index([sourceModule])
+  @@index([dueDate])
+}
+
+// =============================================================================
+// COMPLIANCE + AUDIT
+// =============================================================================
+
+model ComplianceFlag {
+  id              String               @id @default(uuid())
+  entityId        String
+  entity          Entity               @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  flagType        ComplianceFlagType
+  severity        Severity             @default(MEDIUM)
+  description     String?
+  status          ComplianceFlagStatus @default(OPEN)
+  reviewOwnerUserId String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([entityId])
+  @@index([flagType])
+  @@index([status])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorUserId String?
+  action      String
+  entityId    String?
+  objectType  String
+  objectId    String
+  before      Json?
+  after       Json?
+  createdAt   DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+
+  @@index([entityId])
+  @@index([objectType, objectId])
+  @@index([actorUserId])
+  @@index([createdAt])
+}

@@ -1,0 +1,13 @@
+{
+  "case_id": "demo_case_001",
+  "total_sources": 3,
+  "included_count": 1,
+  "excluded_count": 2,
+  "exclusion_reasons": {
+    "src-0002": "knowledge_time 2001-06-05T06:30:00+00:00 is after forecast cutoff 2001-06-01T00:00:00+00:00",
+    "src-0003": "post-event retrospective biography written with knowledge of the outcome"
+  },
+  "validation_issues": [],
+  "cutoff_date": "2001-06-01T00:00:00+00:00",
+  "generated_at": "2026-07-06T22:18:02.188245+00:00"
+}

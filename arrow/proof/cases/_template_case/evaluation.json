@@ -1,0 +1,14 @@
+{
+  "case_id": "_template_case",
+  "forecast_locked_at": null,
+  "outcome_recorded_at": null,
+  "predicted_class": null,
+  "actual_class": null,
+  "correct": null,
+  "probability_assigned_to_actual": null,
+  "brier_score": null,
+  "log_loss": null,
+  "leakage_checklist_result": null,
+  "protocol_deviations": [],
+  "notes": ""
+}

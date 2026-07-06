@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FPTP Strategy Model</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f3;
+      color: #1a1a18;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+      font-size: 20px;
+      font-weight: 500;
+      color: #1a1a18;
+    }
+
+    .page-header p {
+      font-size: 13px;
+      color: #888780;
+      margin-top: 2px;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    .section-label {
+      font-size: 11px;
+      color: #888780;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.6rem;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 0.5px solid rgba(0,0,0,0.12);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+    }
+
+    /* Recommendation gate */
+    .gate {
+      background: #ffffff;
+      border-radius: 0;
+      padding: 1rem 1.25rem;
+      border: 0.5px solid rgba(0,0,0,0.12);
+      border-left-width: 3px;
+    }
+
+    .gate.clear  { border-left-color: #1D9E75; }
+    .gate.fragile { border-left-color: #E24B4A; }
+    .gate.unclear { border-left-color: #BA7517; }
+
+    .gate-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 3px;
+    }
+
+    .gate-sub {
+      font-size: 13px;
+      color: #5F5E5A;
+    }
+
+    /* Action table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      font-size: 11px;
+      color: #888780;
+      font-weight: 400;
+      text-align: right;
+      padding: 6px 8px;
+      border-bottom: 0.5px solid rgba(0,0,0,0.10);
+    }
+
+    th:first-child { text-align: left; }
+
+    td {
+      padding: 9px 8px;
+      font-size: 13px;
+      color: #5F5E5A;
+      text-align: right;
+      vertical-align: middle;
+    }
+
+    td:first-child { text-align: left; }
+
+    tr + tr td { border-top: 0.5px solid rgba(0,0,0,0.07); }
+
+    .action-name {
+      font-size: 14px;
+      color: #1a1a18;
+    }
+
+    .action-name.top { font-weight: 500; }
+
+    .bar-wrap {
+      width: 100%;
+      background: #f1efe8;
+      border-radius: 2px;
+      height: 5px;
+      margin-top: 5px;
+    }
+
+    .bar {
+      height: 5px;
+      border-radius: 2px;
+      background: #1D9E75;
+      transition: width 0.3s ease;
+    }
+
+    .num-top { color: #1a1a18; font-weight: 500; }
+
+    /* Waterfall */
+    .waterfall-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 0;
+    }
+
+    .waterfall-row + .waterfall-row {
+      border-top: 0.5px solid rgba(0,0,0,0.07);
+    }
+
+    .wf-label {
+      font-size: 13px;
+      color: #5F5E5A;
+      width: 160px;
+      flex-shrink: 0;
+    }
+
+    .wf-bars {
+      display: flex;
+      gap: 3px;
+      flex: 1;
+      align-items: center;
+    }
+
+    .wbar {
+      height: 24px;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 7px;
+      font-size: 11px;
+      font-weight: 500;
+      transition: width 0.4s ease;
+    }
+
+    .wf-delta {
+      font-size: 13px;
+      width: 64px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .delta-pos  { color: #0F6E56; font-weight: 500; }
+    .delta-neg  { color: #A32D2D; font-weight: 500; }
+    .delta-zero { color: #888780; }
+
+    .wf-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 0.5px solid rgba(0,0,0,0.07);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #888780;
+    }
+
+    .legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    /* Sensitivity */
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .badge.flip   { background: #FCEBEB; color: #A32D2D; }
+    .badge.stable { background: #E1F5EE; color: #0F6E56; }
+    .badge.unclear-badge { background: #FAEEDA; color: #854F0B; }
+
+    /* Warning note */
+    .warn-note {
+      font-size: 12px;
+      color: #854F0B;
+      background: #FAEEDA;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-header">
+    <a href="fptp_input.html" style="font-size:13px;color:#888780;text-decoration:none;display:inline-block;margin-bottom:10px">← back to input</a>
+    <h1>FPTP strategy model</h1>
+    <p id="header-sub">Actor: SOC &nbsp;·&nbsp; Objective: max seats + vote share &nbsp;·&nbsp; 600 simulations</p>
+  </div>
+
+  <!-- GATE -->
+  <div class="section">
+    <div class="section-label">Recommendation</div>
+    <div class="gate clear" id="gate">
+      <div class="gate-title" id="gate-title">allocate → marginals</div>
+      <div class="gate-sub" id="gate-sub">Clear best action &mdash; leads runner-up by 0.107 &nbsp;·&nbsp; κ = 0.05</div>
+    </div>
+  </div>
+
+  <!-- ACTION RANKING -->
+  <div class="section">
+    <div class="section-label">Ranked actions</div>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>action</th>
+            <th>J</th>
+            <th>E[U]</th>
+            <th>sd</th>
+            <th>E[seats]</th>
+            <th>P(maj)</th>
+          </tr>
+        </thead>
+        <tbody id="action-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DECOMPOSITION -->
+  <div class="section">
+    <div class="section-label">Decomposition &mdash; where the seats come from</div>
+    <div class="card" id="waterfall-container"></div>
+  </div>
+
+  <!-- SENSITIVITY -->
+  <div class="section">
+    <div class="section-label">Sensitivity &mdash; does the recommendation survive?</div>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>scenario</th>
+            <th style="text-align:left">top action</th>
+            <th>gap</th>
+            <th style="text-align:left; padding-left:8px"></th>
+          </tr>
+        </thead>
+        <tbody id="sensitivity-tbody"></tbody>
+      </table>
+      <div class="warn-note" id="flip-note" style="display:none"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // -----------------------------------------------------------------------
+  // DATA — replace this block with JSON from the Python model
+  // -----------------------------------------------------------------------
+  const DATA = {
+    actor: "SOC",
+    objective: "max seats + vote share",
+    n_simulations: 600,
+    total_seats: 7,
+
+    gate: {
+      clear: true,           // false = no clear best, null = toss-up
+      recommended: "allocate → marginals",
+      gap: 0.107,
+      kappa: 0.05,
+    },
+
+    actions: [
+      { label: "allocate → marginals",       J: 6.897, eu: 6.967, sd: 0.231, seats: 5.98, pmaj: 1.00 },
+      { label: "mobilise → marginals",       J: 6.790, eu: 6.887, sd: 0.322, seats: 5.95, pmaj: 1.00 },
+      { label: "status quo",                 J: 6.461, eu: 6.680, sd: 0.730, seats: 5.72, pmaj: 0.98 },
+      { label: "allocate → safe seat",       J: 6.411, eu: 6.645, sd: 0.782, seats: 5.73, pmaj: 0.97 },
+      { label: "publish viability poll",     J: 6.385, eu: 6.636, sd: 0.837, seats: 5.72, pmaj: 0.97 },
+      { label: "reposition → centre",        J: 5.877, eu: 6.192, sd: 1.050, seats: 5.38, pmaj: 0.96 },
+    ],
+
+    decomposition: [
+      { label: "baseline sincere",     seats: { SOC: 4, CON: 3, GRN: 0 } },
+      { label: "after strategic voting", seats: { SOC: 6, CON: 1, GRN: 0 } },
+      { label: "after action",         seats: { SOC: 6, CON: 1, GRN: 0 } },
+    ],
+
+    // Colors per party: [bar fill, text color]
+    party_colors: {
+      SOC: ["#1D9E75", "#04342C"],
+      CON: ["#D3D1C7", "#2C2C2A"],
+      GRN: ["#97C459", "#173404"],
+    },
+
+    sensitivity: [
+      { scenario: "baseline",                top: "allocate → marginals", gap: 0.176, flip: false, clear: true },
+      { scenario: "polling error high",      top: "allocate → marginals", gap: 0.701, flip: false, clear: true },
+      { scenario: "tactical propensity low", top: "allocate → marginals", gap: 0.183, flip: false, clear: true },
+      { scenario: "tactical propensity high",top: "allocate → marginals", gap: 0.162, flip: false, clear: true },
+      { scenario: "transfer rate low",       top: "allocate → marginals", gap: 0.176, flip: false, clear: true },
+    ],
+  };
+  // -----------------------------------------------------------------------
+
+  function render(d) {
+    // Header
+    document.getElementById("header-sub").textContent =
+      `Actor: ${d.actor}  ·  Objective: ${d.objective}  ·  ${d.n_simulations} simulations`;
+
+    // Gate
+    const gate = document.getElementById("gate");
+    const gateTitle = document.getElementById("gate-title");
+    const gateSub = document.getElementById("gate-sub");
+
+    if (d.gate.clear === true) {
+      gate.className = "gate clear";
+      gateTitle.textContent = d.gate.recommended;
+      gateSub.textContent =
+        `Clear best action — leads runner-up by ${d.gate.gap.toFixed(3)}  ·  κ = ${d.gate.kappa}`;
+    } else if (d.gate.clear === false) {
+      gate.className = "gate unclear";
+      gateTitle.textContent = "No clear best action";
+      gateSub.textContent =
+        `Top two within κ = ${d.gate.kappa} — gather more information before committing`;
+    }
+
+    // Action table
+    const Jvals = d.actions.map(a => a.J);
+    const Jmax = Math.max(...Jvals);
+    const Jmin = Math.min(...Jvals);
+    const tbody = document.getElementById("action-tbody");
+    d.actions.forEach((a, i) => {
+      const isTop = i === 0;
+      const barPct = Jmax > Jmin
+        ? ((a.J - Jmin) / (Jmax - Jmin) * 100).toFixed(1)
+        : "100";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <div class="action-name ${isTop ? 'top' : ''}">${a.label}</div>
+          <div class="bar-wrap">
+            <div class="bar" style="width:${barPct}%; ${!isTop ? 'opacity:0.3' : ''}"></div>
+          </div>
+        </td>
+        <td class="${isTop ? 'num-top' : ''}">${a.J.toFixed(3)}</td>
+        <td>${a.eu.toFixed(3)}</td>
+        <td>${a.sd.toFixed(3)}</td>
+        <td>${a.seats.toFixed(2)}</td>
+        <td>${(a.pmaj * 100).toFixed(0)}%</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Waterfall
+    const wc = document.getElementById("waterfall-container");
+    const parties = Object.keys(d.party_colors);
+    d.decomposition.forEach((row, i) => {
+      const prev = i > 0 ? d.decomposition[i - 1].seats : null;
+      const socDiff = prev ? row.seats[d.actor] - prev[d.actor] : null;
+
+      let deltaClass = "delta-zero";
+      let deltaText = "baseline";
+      if (socDiff !== null) {
+        deltaText = (socDiff >= 0 ? "+" : "") + socDiff + " " + d.actor;
+        deltaClass = socDiff > 0 ? "delta-pos" : socDiff < 0 ? "delta-neg" : "delta-zero";
+      }
+
+      const div = document.createElement("div");
+      div.className = "waterfall-row";
+
+      const barsHtml = parties.map(p => {
+        const count = row.seats[p] || 0;
+        if (count === 0) return "";
+        const [fill, text] = d.party_colors[p];
+        const pct = (count / d.total_seats * 100).toFixed(1);
+        return `<div class="wbar" style="width:${pct}%;background:${fill};color:${text}">${count}</div>`;
+      }).join("");
+
+      div.innerHTML = `
+        <span class="wf-label">${row.label}</span>
+        <div class="wf-bars">${barsHtml}</div>
+        <span class="wf-delta ${deltaClass}">${deltaText}</span>
+      `;
+      wc.appendChild(div);
+    });
+
+    const legend = document.createElement("div");
+    legend.className = "wf-legend";
+    parties.forEach(p => {
+      if (!Object.values(d.decomposition[0].seats).some((_, idx) => Object.keys(d.decomposition[0].seats)[idx] === p)) {}
+      const [fill] = d.party_colors[p];
+      legend.innerHTML += `
+        <span class="legend-item">
+          <span class="legend-swatch" style="background:${fill}"></span>${p}
+        </span>`;
+    });
+    wc.appendChild(legend);
+
+    // Sensitivity
+    const stbody = document.getElementById("sensitivity-tbody");
+    const baselineTop = d.sensitivity.find(s => s.scenario === "baseline")?.top;
+    const flips = d.sensitivity.filter(s => s.top !== baselineTop).map(s => s.scenario);
+
+    d.sensitivity.forEach(s => {
+      const flipped = s.top !== baselineTop;
+      const badge = !s.clear
+        ? `<span class="badge unclear-badge">unclear</span>`
+        : flipped
+          ? `<span class="badge flip">flips</span>`
+          : `<span class="badge stable">stable</span>`;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td style="color:#888780">${s.scenario}</td>
+        <td style="text-align:left;color:#1a1a18;font-weight:${flipped ? '500' : '400'}">${s.top}</td>
+        <td>${s.gap.toFixed(3)}</td>
+        <td style="padding-left:8px">${badge}</td>
+      `;
+      stbody.appendChild(tr);
+    });
+
+    if (flips.length > 0) {
+      const note = document.getElementById("flip-note");
+      note.style.display = "block";
+      note.textContent = `⚠ Recommendation flips under: ${flips.join(", ")}. Treat as fragile.`;
+    }
+  }
+
+  const stored = sessionStorage.getItem("fptp_config");
+  if (stored) {
+    const config = JSON.parse(stored);
+    console.log("config received from input form:", config);
+    // TODO: POST config to backend, get result, call render(result)
+    // fetch("/run", { method: "POST", headers: {"Content-Type":"application/json"}, body: stored })
+    //   .then(r => r.json())
+    //   .then(result => render(result));
+  }
+  render(DATA);
+</script>
+</body>
+</html>

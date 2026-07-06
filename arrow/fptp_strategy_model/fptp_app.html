@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arrow</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #1D9E75;
+      --green-dark: #0F6E56;
+      --green-light: #E1F5EE;
+      --amber: #BA7517;
+      --amber-light: #FAEEDA;
+      --red: #E24B4A;
+      --red-light: #FCEBEB;
+      --ink: #1a1a18;
+      --ink-mid: #5F5E5A;
+      --ink-muted: #888780;
+      --surface: #f5f5f3;
+      --card: #ffffff;
+      --border: rgba(0,0,0,0.10);
+      --border-strong: rgba(0,0,0,0.18);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.5;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      height: 48px;
+      background: var(--card);
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .topbar-title {
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    .topbar-sub {
+      font-size: 12px;
+      color: var(--ink-muted);
+    }
+
+    .topbar-run {
+      margin-left: auto;
+      height: 32px;
+      padding: 0 16px;
+      background: var(--ink);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .topbar-run:hover { background: #333; }
+    .topbar-run:disabled { background: #ccc; cursor: default; }
+
+    /* ── Layout ── */
+    .app {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Left panel ── */
+    .left {
+      background: var(--card);
+      border-right: 0.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .step {
+      padding: 16px;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .step-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .step-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-title {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* form elements */
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      height: 32px;
+      padding: 0 8px;
+      border: 0.5px solid var(--border-strong);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      background: var(--card);
+      color: var(--ink);
+      outline: none;
+      margin-bottom: 8px;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 2px rgba(29,158,117,0.12);
+    }
+
+    label.field-label {
+      font-size: 11px;
+      color: var(--ink-muted);
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .field { margin-bottom: 10px; }
+    .field:last-child { margin-bottom: 0; }
+
+    /* candidate row */
+    .cand-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .cand-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    .cand-row input[type="text"] {
+      width: 70px; flex-shrink: 0; margin-bottom: 0;
+    }
+
+    .cand-row input[type="range"] {
+      flex: 1; accent-color: var(--green);
+    }
+
+    .cand-pos {
+      font-size: 11px; color: var(--ink-muted); width: 28px; text-align: right; flex-shrink: 0;
+    }
+
+    .btn-small {
+      height: 28px; padding: 0 10px;
+      border: 0.5px solid var(--border-strong);
+      border-radius: 6px; background: var(--card);
+      font-size: 12px; font-family: inherit;
+      cursor: pointer; color: var(--ink);
+    }
+
+    .btn-small:hover { background: var(--surface); }
+
+    /* action checkboxes */
+    .action-check {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 7px 0;
+      border-bottom: 0.5px solid var(--border);
+      cursor: pointer;
+    }
+
+    .action-check:last-child { border-bottom: none; }
+
+    .action-check input { margin-top: 2px; accent-color: var(--green); cursor: pointer; }
+
+    .action-check-name { font-size: 13px; font-weight: 500; }
+    .action-check-desc { font-size: 11px; color: var(--ink-muted); }
+
+    /* goal radios */
+    .goal-opt {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px;
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      cursor: pointer;
+    }
+
+    .goal-opt:last-child { margin-bottom: 0; }
+    .goal-opt input { accent-color: var(--green); }
+    .goal-opt.selected { border-color: var(--green); background: var(--green-light); }
+    .goal-name { font-size: 13px; font-weight: 500; }
+    .goal-desc { font-size: 11px; color: var(--ink-muted); }
+
+    /* segment sliders */
+    .seg-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+    }
+
+    .seg-label { font-size: 12px; color: var(--ink-mid); width: 44px; flex-shrink: 0; }
+    .seg-row input[type="range"] { flex: 1; accent-color: var(--green); }
+    .seg-val { font-size: 12px; font-weight: 500; width: 34px; text-align: right; flex-shrink: 0; }
+
+    .seg-bar {
+      height: 6px; border-radius: 3px;
+      display: flex; overflow: hidden; gap: 2px;
+      margin-top: 4px; margin-bottom: 8px;
+    }
+
+    .seg-bar-l { background: #378ADD; transition: flex 0.2s; }
+    .seg-bar-c { background: #888780; transition: flex 0.2s; }
+    .seg-bar-r { background: #D85A30; transition: flex 0.2s; }
+
+    .seg-total { font-size: 11px; margin-top: 4px; }
+    .seg-total.ok { color: var(--green-dark); }
+    .seg-total.err { color: var(--red); }
+
+    /* private data */
+    .private-section {
+      padding: 12px 16px;
+      margin-top: auto;
+      border-top: 0.5px solid var(--border);
+      background: #fafaf8;
+    }
+
+    .private-label {
+      font-size: 11px; color: var(--ink-muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+    }
+
+    .lock-icon { font-size: 10px; }
+
+    /* ── Right panel ── */
+    .right {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+    }
+
+    .right-top {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    /* Gate — center oval */
+    .gate-panel {
+      padding: 24px;
+      border-right: 0.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 220px;
+    }
+
+    .gate-ring {
+      width: 180px; height: 130px;
+      border-radius: 50%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 20px;
+      border: 2px solid;
+      transition: border-color 0.3s, background 0.3s;
+    }
+
+    .gate-ring.clear  { border-color: var(--green); background: var(--green-light); }
+    .gate-ring.unclear { border-color: var(--amber); background: var(--amber-light); }
+    .gate-ring.none   { border-color: var(--border-strong); background: var(--surface); }
+
+    .gate-action {
+      font-size: 13px; font-weight: 500; line-height: 1.3;
+      margin-bottom: 4px;
+    }
+
+    .gate-action.clear { color: var(--green-dark); }
+    .gate-action.unclear { color: var(--amber); }
+    .gate-action.none { color: var(--ink-muted); }
+
+    .gate-meta { font-size: 11px; color: var(--ink-muted); }
+
+    .gate-label {
+      font-size: 11px; color: var(--ink-muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    /* Action bars */
+    .bars-panel {
+      padding: 16px 20px;
+      overflow-y: auto;
+    }
+
+    .bars-label {
+      font-size: 11px; color: var(--ink-muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+
+    .action-bar-row {
+      margin-bottom: 10px;
+    }
+
+    .action-bar-row:last-child { margin-bottom: 0; }
+
+    .action-bar-top {
+      display: flex; justify-content: space-between;
+      align-items: baseline; margin-bottom: 3px;
+    }
+
+    .action-bar-name { font-size: 13px; color: var(--ink); }
+    .action-bar-name.top { font-weight: 500; }
+    .action-bar-j { font-size: 12px; color: var(--ink-muted); }
+    .action-bar-j.top { color: var(--green-dark); font-weight: 500; }
+
+    .bar-track {
+      height: 8px; background: #f0efe8; border-radius: 2px; overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%; border-radius: 2px; background: var(--green);
+      transition: width 0.4s ease;
+    }
+
+    /* Bottom panels */
+    .right-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 0.5px solid var(--border);
+      overflow: hidden;
+    }
+
+    .bottom-panel {
+      padding: 14px 18px;
+      overflow-y: auto;
+    }
+
+    .bottom-panel + .bottom-panel {
+      border-left: 0.5px solid var(--border);
+    }
+
+    .panel-label {
+      font-size: 11px; color: var(--ink-muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    /* waterfall */
+    .wf-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .wf-row:last-child { border-bottom: none; }
+
+    .wf-row-label { font-size: 12px; color: var(--ink-muted); width: 110px; flex-shrink: 0; }
+
+    .wf-bars { display: flex; gap: 2px; flex: 1; }
+
+    .wf-bar {
+      height: 18px; border-radius: 2px;
+      display: flex; align-items: center; justify-content: flex-end;
+      padding: 0 5px; font-size: 10px; font-weight: 500;
+    }
+
+    .wf-delta { font-size: 12px; width: 48px; text-align: right; flex-shrink: 0; }
+    .wf-delta.pos { color: var(--green-dark); font-weight: 500; }
+    .wf-delta.neg { color: var(--red); font-weight: 500; }
+    .wf-delta.zero { color: var(--ink-muted); }
+
+    /* sensitivity */
+    .sens-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .sens-row:last-child { border-bottom: none; }
+
+    .sens-scenario { font-size: 12px; color: var(--ink-muted); flex: 1; }
+    .sens-top { font-size: 12px; color: var(--ink); font-weight: 500; flex: 1; }
+
+    .badge {
+      font-size: 10px; padding: 2px 7px; border-radius: 4px; flex-shrink: 0;
+    }
+
+    .badge.stable { background: var(--green-light); color: var(--green-dark); }
+    .badge.flip   { background: var(--red-light); color: var(--red); }
+    .badge.unclear-b { background: var(--amber-light); color: var(--amber); }
+
+    /* empty state */
+    .empty-state {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      height: 100%; color: var(--ink-muted);
+      font-size: 13px; gap: 6px; text-align: center; padding: 20px;
+    }
+
+    .empty-state .empty-icon { font-size: 24px; opacity: 0.4; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-title">Arrow</span>
+  <span class="topbar-sub" id="topbar-sub">configure an election on the left</span>
+  <button class="topbar-run" id="run-btn" onclick="runModel()">Run model →</button>
+</div>
+
+<div class="app">
+
+  <!-- LEFT PANEL -->
+  <div class="left">
+
+    <!-- Step 1: Election -->
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <span class="step-title">Election</span>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Constituency or election name</label>
+        <input type="text" id="election-name" placeholder="e.g. Bristol West 2025" oninput="updateTopbar()">
+      </div>
+
+      <div class="field">
+        <label class="field-label">Candidates</label>
+        <div id="cand-list"></div>
+        <button class="btn-small" onclick="addCandidate()" style="margin-top:4px">+ add candidate</button>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Optimising for</label>
+        <select id="actor-select" onchange="updateTopbar()">
+          <option value="">— pick candidate —</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Step 2: Actions -->
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <span class="step-title">Actions willing to take</span>
+      </div>
+      <div id="action-checks"></div>
+    </div>
+
+    <!-- Step 3: Goal -->
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <span class="step-title">Goal</span>
+      </div>
+      <div id="goal-opts"></div>
+    </div>
+
+    <!-- Step 4: Voting blocs -->
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">4</div>
+        <span class="step-title">Voter split</span>
+      </div>
+      <div class="seg-bar" id="seg-bar">
+        <div class="seg-bar-l" id="sbl" style="flex:33"></div>
+        <div class="seg-bar-c" id="sbc" style="flex:34"></div>
+        <div class="seg-bar-r" id="sbr" style="flex:33"></div>
+      </div>
+      <div class="seg-row">
+        <span class="seg-label">Left</span>
+        <input type="range" min="0" max="100" value="33" id="seg-left"
+          oninput="updateSeg()">
+        <span class="seg-val" id="sv-left">33%</span>
+      </div>
+      <div class="seg-row">
+        <span class="seg-label">Centre</span>
+        <input type="range" min="0" max="100" value="34" id="seg-centre"
+          oninput="updateSeg()">
+        <span class="seg-val" id="sv-centre">34%</span>
+      </div>
+      <div class="seg-row">
+        <span class="seg-label">Right</span>
+        <input type="range" min="0" max="100" value="33" id="seg-right"
+          oninput="updateSeg()">
+        <span class="seg-val" id="sv-right">33%</span>
+      </div>
+      <div class="seg-total ok" id="seg-total">Total: 100% ✓</div>
+    </div>
+
+    <!-- Private data -->
+    <div class="private-section">
+      <div class="private-label"><span class="lock-icon">🔒</span> Private data</div>
+      <input type="text" placeholder="Constituency poll override (optional)" style="margin-bottom:0">
+    </div>
+
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right">
+
+    <div class="right-top">
+
+      <!-- Gate -->
+      <div class="gate-panel">
+        <div class="gate-label">Recommendation</div>
+        <div class="gate-ring none" id="gate-ring">
+          <div class="gate-action none" id="gate-action">Run model to see recommendation</div>
+          <div class="gate-meta" id="gate-meta"></div>
+        </div>
+      </div>
+
+      <!-- Action bars -->
+      <div class="bars-panel">
+        <div class="bars-label">Ranked actions</div>
+        <div id="action-bars">
+          <div class="empty-state">
+            <div class="empty-icon">↑</div>
+            configure and run the model
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="right-bottom">
+
+      <!-- Decomposition -->
+      <div class="bottom-panel">
+        <div class="panel-label">Decomposition</div>
+        <div id="waterfall">
+          <div class="empty-state" style="height:80px">–</div>
+        </div>
+      </div>
+
+      <!-- Sensitivity -->
+      <div class="bottom-panel">
+        <div class="panel-label">Sensitivity</div>
+        <div id="sensitivity">
+          <div class="empty-state" style="height:80px">–</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  const CAND_COLORS = ["#1D9E75","#378ADD","#D85A30","#BA7517","#D4537E"];
+  const PARTY_COLORS = {
+    SOC: ["#1D9E75","#04342C"],
+    CON: ["#D3D1C7","#2C2C2A"],
+    GRN: ["#97C459","#173404"],
+  };
+
+  let candidates = [];
+  let candCount = 0;
+
+  const ACTIONS = [
+    { type: "status_quo",   name: "Status quo",            desc: "reference — do nothing different" },
+    { type: "allocate",     name: "Allocate to marginals",  desc: "shift effort to winnable seats" },
+    { type: "mobilise",     name: "Mobilise supporters",    desc: "raise turnout among your voters" },
+    { type: "reposition",   name: "Reposition",             desc: "move toward centre, risking base" },
+    { type: "release_info", name: "Publish viability poll", desc: "sharpen voter coordination" },
+    { type: "withdraw",     name: "Withdraw",               desc: "stand down" },
+  ];
+
+  const GOALS = [
+    { id: "seats",    name: "Maximise seats",         desc: "win as many seats as possible",         weights: { w_seats: 1.0 } },
+    { id: "majority", name: "Reach a majority",       desc: "prioritise hitting the threshold",       weights: { w_majority: 1.0 } },
+    { id: "vote",     name: "Maximise vote share",    desc: "build the national vote",                weights: { w_vote: 1.0 } },
+  ];
+
+  let selectedGoal = "seats";
+
+  function addCandidate() {
+    candCount++;
+    const defaults = ["GRN","SOC","CON","LIB","NAT"];
+    const name = defaults[candidates.length] || "P" + candCount;
+    const pos = (candidates.length * 0.8) - 0.8;
+    candidates.push({ id: "c" + candCount, name, pos });
+    renderCandidates();
+    updateActorSelect();
+  }
+
+  function removeCandidate(id) {
+    candidates = candidates.filter(c => c.id !== id);
+    renderCandidates();
+    updateActorSelect();
+  }
+
+  function renderCandidates() {
+    const el = document.getElementById("cand-list");
+    el.innerHTML = "";
+    candidates.forEach((c, i) => {
+      const color = CAND_COLORS[i % CAND_COLORS.length];
+      const row = document.createElement("div");
+      row.className = "cand-row";
+      row.innerHTML = `
+        <span class="cand-dot" style="background:${color}"></span>
+        <input type="text" value="${c.name}" style="width:62px;margin-bottom:0"
+          oninput="candidates[${i}].name=this.value; updateActorSelect()">
+        <input type="range" min="-2" max="2" step="0.1" value="${c.pos}"
+          oninput="candidates[${i}].pos=parseFloat(this.value); this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)">
+        <span class="cand-pos">${c.pos.toFixed(1)}</span>
+        <button class="btn-small" style="padding:0 7px;color:#A32D2D;border-color:rgba(163,45,45,0.3)"
+          onclick="removeCandidate('${c.id}')">×</button>
+      `;
+      el.appendChild(row);
+    });
+  }
+
+  function updateActorSelect() {
+    const sel = document.getElementById("actor-select");
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— pick candidate —</option>';
+    candidates.forEach(c => {
+      sel.innerHTML += `<option value="${c.name}" ${c.name===cur?'selected':''}>${c.name}</option>`;
+    });
+    updateTopbar();
+  }
+
+  function renderActionChecks() {
+    const el = document.getElementById("action-checks");
+    ACTIONS.forEach(a => {
+      const label = document.createElement("label");
+      label.className = "action-check";
+      label.innerHTML = `
+        <input type="checkbox" value="${a.type}" ${a.type==='status_quo'?'checked':''}>
+        <div>
+          <div class="action-check-name">${a.name}</div>
+          <div class="action-check-desc">${a.desc}</div>
+        </div>`;
+      el.appendChild(label);
+    });
+  }
+
+  function renderGoalOpts() {
+    const el = document.getElementById("goal-opts");
+    GOALS.forEach(g => {
+      const div = document.createElement("div");
+      div.className = "goal-opt" + (g.id === selectedGoal ? " selected" : "");
+      div.innerHTML = `
+        <input type="radio" name="goal" value="${g.id}" ${g.id===selectedGoal?'checked':''}>
+        <div>
+          <div class="goal-name">${g.name}</div>
+          <div class="goal-desc">${g.desc}</div>
+        </div>`;
+      div.onclick = () => {
+        selectedGoal = g.id;
+        document.querySelectorAll(".goal-opt").forEach(d => d.classList.remove("selected"));
+        div.classList.add("selected");
+        div.querySelector("input").checked = true;
+      };
+      el.appendChild(div);
+    });
+  }
+
+  function updateSeg() {
+    const l = parseInt(document.getElementById("seg-left").value);
+    const c = parseInt(document.getElementById("seg-centre").value);
+    const r = parseInt(document.getElementById("seg-right").value);
+    document.getElementById("sv-left").textContent = l + "%";
+    document.getElementById("sv-centre").textContent = c + "%";
+    document.getElementById("sv-right").textContent = r + "%";
+    document.getElementById("sbl").style.flex = l;
+    document.getElementById("sbc").style.flex = c;
+    document.getElementById("sbr").style.flex = r;
+    const total = l + c + r;
+    const el = document.getElementById("seg-total");
+    el.textContent = `Total: ${total}%${total === 100 ? " ✓" : " — must equal 100"}`;
+    el.className = "seg-total " + (total === 100 ? "ok" : "err");
+  }
+
+  function updateTopbar() {
+    const name = document.getElementById("election-name").value;
+    const actor = document.getElementById("actor-select").value;
+    const sub = document.getElementById("topbar-sub");
+    if (name && actor) {
+      sub.textContent = `${name}  ·  optimising for ${actor}`;
+    } else if (name) {
+      sub.textContent = name;
+    } else {
+      sub.textContent = "configure an election on the left";
+    }
+  }
+
+  // ── Render results ──
+  const DEMO = {
+    actor: "SOC",
+    total_seats: 7,
+    gate: { clear: true, recommended: "allocate → marginals", gap: 0.107, kappa: 0.05 },
+    actions: [
+      { label: "allocate → marginals",   J: 6.897, eu: 6.967, sd: 0.231, seats: 5.98, pmaj: 1.00 },
+      { label: "mobilise → marginals",   J: 6.790, eu: 6.887, sd: 0.322, seats: 5.95, pmaj: 1.00 },
+      { label: "status quo",             J: 6.461, eu: 6.680, sd: 0.730, seats: 5.72, pmaj: 0.98 },
+      { label: "publish viability poll", J: 6.385, eu: 6.636, sd: 0.837, seats: 5.72, pmaj: 0.97 },
+      { label: "reposition → centre",    J: 5.877, eu: 6.192, sd: 1.050, seats: 5.38, pmaj: 0.96 },
+    ],
+    decomposition: [
+      { label: "baseline sincere",      seats: { SOC:4, CON:3, GRN:0 } },
+      { label: "after strategic voting",seats: { SOC:6, CON:1, GRN:0 } },
+      { label: "after action",          seats: { SOC:6, CON:1, GRN:0 } },
+    ],
+    sensitivity: [
+      { scenario: "baseline",                 top: "allocate → marginals", gap: 0.176, clear: true },
+      { scenario: "polling error high",       top: "allocate → marginals", gap: 0.701, clear: true },
+      { scenario: "tactical propensity low",  top: "allocate → marginals", gap: 0.183, clear: true },
+      { scenario: "tactical propensity high", top: "allocate → marginals", gap: 0.162, clear: true },
+      { scenario: "transfer rate low",        top: "allocate → marginals", gap: 0.176, clear: true },
+    ],
+  };
+
+  function runModel() {
+    // TODO: POST to backend. For now render demo data.
+    renderResults(DEMO);
+  }
+
+  function renderResults(d) {
+    // Gate
+    const ring = document.getElementById("gate-ring");
+    const action = document.getElementById("gate-action");
+    const meta = document.getElementById("gate-meta");
+    if (d.gate.clear) {
+      ring.className = "gate-ring clear";
+      action.className = "gate-action clear";
+      action.textContent = d.gate.recommended;
+      meta.textContent = `gap ${d.gate.gap.toFixed(3)}  ·  κ ${d.gate.kappa}`;
+    } else {
+      ring.className = "gate-ring unclear";
+      action.className = "gate-action unclear";
+      action.textContent = "No clear best action";
+      meta.textContent = `top two within κ ${d.gate.kappa}`;
+    }
+
+    // Action bars
+    const barsEl = document.getElementById("action-bars");
+    barsEl.innerHTML = "";
+    const Jmax = Math.max(...d.actions.map(a => a.J));
+    const Jmin = Math.min(...d.actions.map(a => a.J));
+    d.actions.forEach((a, i) => {
+      const pct = Jmax > Jmin ? ((a.J - Jmin) / (Jmax - Jmin) * 100).toFixed(1) : 100;
+      const isTop = i === 0;
+      barsEl.innerHTML += `
+        <div class="action-bar-row">
+          <div class="action-bar-top">
+            <span class="action-bar-name ${isTop?'top':''}">${a.label}</span>
+            <span class="action-bar-j ${isTop?'top':''}">J=${a.J.toFixed(3)}</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${pct}%;${!isTop?'opacity:0.3':''}"></div>
+          </div>
+        </div>`;
+    });
+
+    // Waterfall
+    const wfEl = document.getElementById("waterfall");
+    wfEl.innerHTML = "";
+    d.decomposition.forEach((row, i) => {
+      const prev = i > 0 ? d.decomposition[i-1].seats : null;
+      const diff = prev ? row.seats[d.actor] - prev[d.actor] : null;
+      const deltaClass = diff === null ? "zero" : diff > 0 ? "pos" : diff < 0 ? "neg" : "zero";
+      const deltaText = diff === null ? "baseline" : (diff >= 0 ? "+" : "") + diff;
+      const parties = Object.keys(PARTY_COLORS);
+      const barsHtml = parties.map(p => {
+        const n = row.seats[p] || 0;
+        if (!n) return "";
+        const [fill, text] = PARTY_COLORS[p];
+        const pct = (n / d.total_seats * 100).toFixed(0);
+        return `<div class="wf-bar" style="width:${pct}%;background:${fill};color:${text}">${n}</div>`;
+      }).join("");
+      wfEl.innerHTML += `
+        <div class="wf-row">
+          <span class="wf-row-label">${row.label}</span>
+          <div class="wf-bars">${barsHtml}</div>
+          <span class="wf-delta ${deltaClass}">${deltaText}</span>
+        </div>`;
+    });
+
+    // Sensitivity
+    const sensEl = document.getElementById("sensitivity");
+    sensEl.innerHTML = "";
+    const baseTop = d.sensitivity[0].top;
+    d.sensitivity.forEach(s => {
+      const flipped = s.top !== baseTop;
+      const badge = !s.clear
+        ? `<span class="badge unclear-b">unclear</span>`
+        : flipped
+          ? `<span class="badge flip">flips</span>`
+          : `<span class="badge stable">stable</span>`;
+      sensEl.innerHTML += `
+        <div class="sens-row">
+          <span class="sens-scenario">${s.scenario}</span>
+          <span class="sens-top">${s.top}</span>
+          ${badge}
+        </div>`;
+    });
+  }
+
+  // Init
+  renderActionChecks();
+  renderGoalOpts();
+  addCandidate(); addCandidate(); addCandidate();
+  document.getElementById("actor-select").value = "SOC";
+  updateTopbar();
+</script>
+</body>
+</html>

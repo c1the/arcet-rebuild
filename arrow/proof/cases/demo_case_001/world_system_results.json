@@ -1,0 +1,123 @@
+{
+  "case_id": "demo_case_001",
+  "generated_at": "2026-07-06T22:18:02.472994+00:00",
+  "systems_run": [
+    "incentive",
+    "faction",
+    "ideology",
+    "network_contagion",
+    "institutional",
+    "media_pressure"
+  ],
+  "results": [
+    {
+      "system_name": "incentive",
+      "system_version": "0.1.0",
+      "case_id": "demo_case_001",
+      "score": 0.0,
+      "confidence": 0.2,
+      "direction": "insufficient_signal",
+      "reasoning_summary": "Incentive reading for Alexandra Voss, leader of the Unity Party (fictional): electoral-pressure and polling-decline signals aggregate to 0.000. Higher values mean colleagues face growing electoral cost in keeping the incumbent, raising the incentive to act. No usable signal: the input level (0.000) is near zero.",
+      "supporting_claim_ids": [],
+      "top_evidence": [],
+      "limitations": [
+        "Theory-specific heuristic assessment derived from keyword-extracted claims; not a calibrated probability and not the Arrow forecast."
+      ],
+      "notes": ""
+    },
+    {
+      "system_name": "faction",
+      "system_version": "0.1.0",
+      "case_id": "demo_case_001",
+      "score": 0.25,
+      "confidence": 0.485,
+      "direction": "mixed",
+      "reasoning_summary": "Factional reading for Alexandra Voss, leader of the Unity Party (fictional): faction-alignment, elite-signal and leadership-opposition claims aggregate to 0.250. Higher values indicate organised internal opposition rather than isolated grumbling.",
+      "supporting_claim_ids": [
+        "cl-0001"
+      ],
+      "top_evidence": [
+        {
+          "claim_id": "cl-0001",
+          "claim_type": "elite_signal",
+          "weighted_score": 0.25,
+          "text_span": "The letter is understood to carry roughly thirty signatures, short of the forty-five required to trigger a formal challenge under party rules."
+        }
+      ],
+      "limitations": [
+        "Theory-specific heuristic assessment derived from keyword-extracted claims; not a calibrated probability and not the Arrow forecast."
+      ],
+      "notes": ""
+    },
+    {
+      "system_name": "ideology",
+      "system_version": "0.1.0",
+      "case_id": "demo_case_001",
+      "score": 0.0,
+      "confidence": 0.2,
+      "direction": "insufficient_signal",
+      "reasoning_summary": "Ideological reading for Alexandra Voss, leader of the Unity Party (fictional): ideological-conflict claims aggregate to 0.000. Higher values mean the dispute is framed in principles and red lines, which hardens positions and narrows the space for a negotiated retreat. No usable signal: the input level (0.000) is near zero.",
+      "supporting_claim_ids": [],
+      "top_evidence": [],
+      "limitations": [
+        "Theory-specific heuristic assessment derived from keyword-extracted claims; not a calibrated probability and not the Arrow forecast."
+      ],
+      "notes": ""
+    },
+    {
+      "system_name": "network_contagion",
+      "system_version": "0.1.0",
+      "case_id": "demo_case_001",
+      "score": 0.0,
+      "confidence": 0.2,
+      "direction": "insufficient_signal",
+      "reasoning_summary": "Network-contagion reading for Alexandra Voss, leader of the Unity Party (fictional): network, relationship-break and relationship-support claims aggregate to 0.000. Higher values indicate defection cascading through the actor's relationship network; support claims counteract. No usable signal: the input level (0.000) is near zero.",
+      "supporting_claim_ids": [],
+      "top_evidence": [],
+      "limitations": [
+        "Theory-specific heuristic assessment derived from keyword-extracted claims; not a calibrated probability and not the Arrow forecast."
+      ],
+      "notes": ""
+    },
+    {
+      "system_name": "institutional",
+      "system_version": "0.1.0",
+      "case_id": "demo_case_001",
+      "score": 0.2,
+      "confidence": 0.46,
+      "direction": "mixed",
+      "reasoning_summary": "Institutional reading for Alexandra Voss, leader of the Unity Party (fictional): constraint claims aggregate to 0.200; faction pressure (0.250) is at or below the activation threshold, so constraints alone do not imply the event is likelier — rules can enable or block.",
+      "supporting_claim_ids": [
+        "cl-0002"
+      ],
+      "top_evidence": [
+        {
+          "claim_id": "cl-0002",
+          "claim_type": "institutional_constraint",
+          "weighted_score": 0.2,
+          "text_span": "The letter is understood to carry roughly thirty signatures, short of the forty-five required to trigger a formal challenge under party rules."
+        }
+      ],
+      "limitations": [
+        "Theory-specific heuristic assessment derived from keyword-extracted claims; not a calibrated probability and not the Arrow forecast.",
+        "Institutional signals are direction-ambiguous by nature; the v0 faction-activation rule is a crude proxy for mechanism activation."
+      ],
+      "notes": ""
+    },
+    {
+      "system_name": "media_pressure",
+      "system_version": "0.1.0",
+      "case_id": "demo_case_001",
+      "score": 0.0,
+      "confidence": 0.2,
+      "direction": "insufficient_signal",
+      "reasoning_summary": "Public-salience reading for Alexandra Voss, leader of the Unity Party (fictional): media, scandal and public-dissent claims aggregate to 0.000. Higher values mean the crisis stays on the front pages, raising the cost of inaction for the target's colleagues. No usable signal: the input level (0.000) is near zero.",
+      "supporting_claim_ids": [],
+      "top_evidence": [],
+      "limitations": [
+        "Theory-specific heuristic assessment derived from keyword-extracted claims; not a calibrated probability and not the Arrow forecast."
+      ],
+      "notes": ""
+    }
+  ]
+}

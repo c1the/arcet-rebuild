@@ -1,0 +1,15 @@
+{
+  "case_id": "_template_case",
+  "locked": false,
+  "locked_at": null,
+  "method": "",
+  "prediction_question": "",
+  "probabilities": {
+    "positive": null,
+    "negative": null
+  },
+  "point_forecast": null,
+  "rationale": "",
+  "key_evidence_ids": [],
+  "runs": []
+}

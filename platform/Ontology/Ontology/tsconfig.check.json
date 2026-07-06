@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "vitest/globals"]
+  },
+  "include": [
+    "src/domain/ontology/enums.ts",
+    "src/domain/ontology/types.ts",
+    "src/domain/ontology/validators.ts",
+    "src/domain/ontology/rules.ts",
+    "src/api/http.ts",
+    "tests/rules.test.ts",
+    "tests/http.test.ts",
+    "tests/validators.test.ts"
+  ]
+}

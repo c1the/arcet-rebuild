@@ -1,0 +1,41 @@
+{
+  "case_id": "demo_case_001",
+  "event_name": "unity-party-leadership-vote-2001",
+  "event_type": "leadership challenge",
+  "target_actor": "Alexandra Voss, leader of the Unity Party (fictional)",
+  "target_organisation": "Unity Party (fictional)",
+  "country_jurisdiction": "Freedonia (fictional) — party internal rules",
+  "actual_event_date": null,
+  "forecast_cutoff": "2001-06-01T00:00:00+00:00",
+  "forecast_horizon_days": 14,
+  "prediction_question": "Will Alexandra Voss still be leader of the Unity Party on 2001-06-15?",
+  "outcome_classes": ["positive", "negative"],
+  "positive_outcome_definition": "Voss holds the party leadership continuously through 2001-06-15, per official party records.",
+  "negative_outcome_definition": "Voss resigns, is removed, or otherwise ceases to be leader on or before 2001-06-15, including any caretaker arrangement.",
+  "data_window": {
+    "start": "2000-06-01T00:00:00+00:00",
+    "end": "2001-06-01T00:00:00+00:00"
+  },
+  "allowed_sources": [
+    "contemporaneous_news",
+    "official_statements",
+    "voting_records",
+    "polling",
+    "public_records",
+    "manual_internal_notes"
+  ],
+  "excluded_sources": [
+    "post_event_retrospectives",
+    "later_biographies",
+    "outcome_revealing_summaries",
+    "post_cutoff_articles",
+    "post_cutoff_analysis",
+    "undated_sources"
+  ],
+  "known_limitations": [
+    "Fully fictional demo case used only to exercise the Phase 1 ingestion pipeline."
+  ],
+  "status": "defined",
+  "frozen_at": "2026-07-06T00:00:00+00:00",
+  "frozen_by": "phase1_smoke_test"
+}

@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>War Room — Arcet</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #1D9E75;
+      --green-dark: #0F6E56;
+      --green-light: #E1F5EE;
+      --amber: #BA7517;
+      --amber-bg: #FAEEDA;
+      --red: #C0392B;
+      --red-light: #FCEBEB;
+      --blue: #2563EB;
+      --blue-light: #EFF6FF;
+      --ink: #1a1a18;
+      --ink-mid: #5F5E5A;
+      --ink-muted: #9B9A96;
+      --surface: #0e0e0e;
+      --surface-2: #161616;
+      --surface-3: #1e1e1e;
+      --card: #1c1c1c;
+      --border: rgba(255,255,255,0.07);
+      --border-strong: rgba(255,255,255,0.13);
+      --text: #e8e8e6;
+      --text-mid: #9B9A96;
+      --text-muted: #636360;
+      --accent: #1D9E75;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.5;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      height: 48px;
+      background: var(--surface-2);
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 20px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .topbar-logo {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .topbar-sep { width: 0.5px; height: 20px; background: var(--border-strong); }
+
+    .topbar-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .topbar-nav {
+      display: flex;
+      gap: 2px;
+      margin-left: 8px;
+    }
+
+    .topbar-nav a {
+      padding: 4px 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      color: var(--text-mid);
+      text-decoration: none;
+      transition: background 0.1s, color 0.1s;
+    }
+
+    .topbar-nav a:hover { background: var(--surface-3); color: var(--text); }
+    .topbar-nav a.active { background: var(--surface-3); color: var(--text); }
+
+    .topbar-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .refresh-btn {
+      height: 28px;
+      padding: 0 12px;
+      background: transparent;
+      color: var(--text-mid);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .refresh-btn:hover { border-color: var(--accent); color: var(--text); }
+    .refresh-btn.spinning svg { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .last-updated {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+    }
+
+    /* ── Layout ── */
+    .workspace {
+      flex: 1;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 280px 1fr 300px;
+      grid-template-rows: 1fr;
+    }
+
+    /* ── Left rail ── */
+    .left-rail {
+      border-right: 0.5px solid var(--border);
+      background: var(--surface-2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .rail-header {
+      padding: 14px 16px 10px;
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .rail-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .rail-count {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .rail-body {
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-strong) transparent;
+    }
+
+    /* ── Center panel ── */
+    .center-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 12px 20px;
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface-2);
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-mid);
+      letter-spacing: 0.03em;
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-strong) transparent;
+    }
+
+    /* ── Right rail ── */
+    .right-rail {
+      border-left: 0.5px solid var(--border);
+      background: var(--surface-2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Stat row ── */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      border-bottom: 0.5px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .stat-cell {
+      padding: 10px 16px;
+      border-right: 0.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .stat-cell:last-child { border-right: none; }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    .stat-value.red { color: var(--red); }
+    .stat-value.amber { color: var(--amber); }
+    .stat-value.green { color: var(--green); }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /* ── Risk item ── */
+    .risk-item {
+      padding: 10px 16px;
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .risk-item:hover { background: var(--surface-3); }
+    .risk-item.selected { background: rgba(29,158,117,0.07); border-left: 2px solid var(--accent); padding-left: 14px; }
+
+    .risk-sev {
+      width: 3px;
+      border-radius: 2px;
+      align-self: stretch;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .risk-sev.critical { background: var(--red); }
+    .risk-sev.high { background: var(--amber); }
+    .risk-sev.medium { background: #6B7280; }
+    .risk-sev.low { background: var(--green-dark); }
+
+    .risk-body { flex: 1; min-width: 0; }
+
+    .risk-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    .risk-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .risk-score {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-mid);
+      flex-shrink: 0;
+      min-width: 28px;
+      text-align: right;
+    }
+
+    /* ── Action item ── */
+    .action-item {
+      padding: 10px 16px;
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .action-item:hover { background: var(--surface-3); }
+
+    .action-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .action-icon.overdue { background: rgba(192,57,43,0.15); color: var(--red); }
+    .action-icon.pending { background: rgba(186,117,23,0.15); color: var(--amber); }
+    .action-icon.done { background: rgba(29,158,117,0.12); color: var(--green); }
+
+    .action-body { flex: 1; min-width: 0; }
+
+    .action-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .action-meta { font-size: 11px; color: var(--text-muted); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    .badge.critical { background: rgba(192,57,43,0.15); color: #E57373; }
+    .badge.high { background: rgba(186,117,23,0.15); color: #F0A500; }
+    .badge.medium { background: rgba(107,114,128,0.2); color: #9CA3AF; }
+    .badge.overdue { background: rgba(192,57,43,0.15); color: #E57373; }
+    .badge.pending { background: rgba(186,117,23,0.12); color: #F0A500; }
+    .badge.done { background: rgba(29,158,117,0.12); color: #1D9E75; }
+
+    /* ── Timeline item ── */
+    .change-item {
+      padding: 9px 16px;
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      gap: 10px;
+    }
+
+    .change-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .change-dot.positive { background: var(--green); }
+    .change-dot.negative { background: var(--red); }
+    .change-dot.neutral { background: #4B5563; }
+
+    .change-body { flex: 1; min-width: 0; }
+
+    .change-desc {
+      font-size: 12px;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .change-time {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* ── Detail panel ── */
+    .detail-section {
+      padding: 14px 16px;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .detail-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .detail-text {
+      font-size: 12px;
+      color: var(--text-mid);
+      line-height: 1.6;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+    }
+
+    .detail-key { font-size: 11px; color: var(--text-muted); }
+    .detail-val { font-size: 11px; color: var(--text); font-weight: 500; }
+
+    /* ── Scenario shortcuts ── */
+    .scenario-btn {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--surface-3);
+      border: 0.5px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-mid);
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: border-color 0.1s, color 0.1s, background 0.1s;
+      margin-bottom: 6px;
+    }
+    .scenario-btn:hover { border-color: var(--accent); color: var(--text); background: rgba(29,158,117,0.06); }
+
+    .scenario-icon { font-size: 14px; }
+
+    /* ── Bar chart ── */
+    .mini-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+    }
+    .mini-bar-label { font-size: 11px; color: var(--text-muted); width: 90px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mini-bar-track { flex: 1; height: 4px; background: var(--surface-3); border-radius: 2px; overflow: hidden; }
+    .mini-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+    .mini-bar-val { font-size: 11px; color: var(--text-muted); width: 28px; text-align: right; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    /* ── Loading skeleton ── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface-3) 25%, var(--surface-2) 50%, var(--surface-3) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    /* ── Center top section with summary grid ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .intel-card {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .intel-card-header {
+      padding: 10px 14px;
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .intel-card-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .intel-card-body { padding: 10px 0; }
+
+    /* ── Worsening risk trend ── */
+    .trend-item {
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .trend-arrow {
+      font-size: 12px;
+      width: 16px;
+      text-align: center;
+    }
+    .trend-arrow.up { color: var(--red); }
+    .trend-arrow.down { color: var(--green); }
+
+    .trend-name {
+      flex: 1;
+      font-size: 12px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .trend-delta {
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .trend-delta.neg { color: var(--red); }
+    .trend-delta.pos { color: var(--green); }
+
+    /* ── Filter row ── */
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      padding: 10px 16px;
+      border-bottom: 0.5px solid var(--border);
+      flex-shrink: 0;
+      background: var(--surface-2);
+    }
+
+    .filter-chip {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      cursor: pointer;
+      border: 0.5px solid var(--border);
+      background: transparent;
+      color: var(--text-mid);
+      font-family: inherit;
+      transition: all 0.1s;
+    }
+    .filter-chip:hover { border-color: var(--accent); color: var(--text); }
+    .filter-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* scrollbars */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+
+    /* posture card */
+    .posture-card { background: var(--surface-2); border: 0.5px solid var(--border-strong); border-left: 3px solid var(--red); margin-bottom: 4px; flex-shrink: 0; }
+    .posture-inner { padding: 14px 18px 10px; display: flex; flex-direction: column; gap: 12px; }
+    .posture-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .posture-label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--red); margin-bottom: 5px; }
+    .posture-rec { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.5; max-width: 480px; }
+    .posture-conf { text-align: right; flex-shrink: 0; }
+    .posture-conf-val { font-size: 22px; font-weight: 700; color: var(--amber); line-height: 1; }
+    .posture-conf-label { font-size: 9px; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+    .posture-drivers { display: flex; flex-direction: column; gap: 3px; }
+    .posture-driver-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+    .posture-driver { font-size: 11px; color: var(--text-mid); line-height: 1.5; padding-left: 4px; }
+    .posture-actions-block { background: rgba(0,0,0,0.2); padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; border: 0.5px solid var(--border); }
+    .posture-actions-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green); margin-bottom: 4px; }
+    .posture-action-row { display: flex; align-items: baseline; gap: 8px; font-size: 11px; color: var(--text); line-height: 1.5; }
+    .posture-num { font-size: 10px; font-weight: 700; color: var(--green); width: 14px; flex-shrink: 0; }
+    .posture-foot { padding: 6px 18px 10px; display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); border-top: 0.5px solid var(--border); }
+  </style>
+</head>
+<body>
+
+<!-- ── Top bar ── -->
+<div class="topbar">
+  <span class="topbar-logo">Arcet</span>
+  <div class="topbar-sep"></div>
+  <span class="topbar-title">War Room</span>
+  <nav class="topbar-nav">
+    <a href="#" class="active" data-view="overview">Overview</a>
+    <a href="#" data-view="risks">Risks</a>
+    <a href="#" data-view="actions">Actions</a>
+    <a href="#" data-view="scenarios">Scenarios</a>
+    <a href="arrow.html">Arrow ↗</a>
+  </nav>
+  <div class="topbar-right">
+    <span class="last-updated" id="lastUpdated">—</span>
+    <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">
+      <svg id="refreshIcon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+      Refresh
+    </button>
+    <div class="status-dot" id="statusDot"></div>
+  </div>
+</div>
+
+<!-- ── Stat row ── -->
+<div class="stat-row" id="statRow">
+  <div class="stat-cell"><div class="stat-value red skeleton" style="width:40px;height:24px"></div><div class="stat-label">Critical Risks</div></div>
+  <div class="stat-cell"><div class="stat-value amber skeleton" style="width:40px;height:24px"></div><div class="stat-label">Overdue Actions</div></div>
+  <div class="stat-cell"><div class="stat-value skeleton" style="width:40px;height:24px"></div><div class="stat-label">Recent Changes</div></div>
+  <div class="stat-cell"><div class="stat-value skeleton" style="width:40px;height:24px"></div><div class="stat-label">Stale Intel</div></div>
+</div>
+
+<!-- ── Workspace ── -->
+<div class="workspace">
+
+  <!-- Left: Risks rail -->
+  <div class="left-rail">
+    <div class="rail-header">
+      <span class="rail-label">Risks</span>
+      <span class="rail-count" id="riskCount">—</span>
+    </div>
+    <div class="filter-row">
+      <button class="filter-chip active" data-sev="all" onclick="filterRisks(this, 'all')">All</button>
+      <button class="filter-chip" data-sev="CRITICAL" onclick="filterRisks(this, 'CRITICAL')">Critical</button>
+      <button class="filter-chip" data-sev="HIGH" onclick="filterRisks(this, 'HIGH')">High</button>
+      <button class="filter-chip" data-sev="MEDIUM" onclick="filterRisks(this, 'MEDIUM')">Med</button>
+    </div>
+    <div class="rail-body" id="riskList">
+      <div class="empty-state">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Center: Main panel -->
+  <div class="center-panel">
+    <!-- Tab header -->
+    <div class="panel-header">
+      <span class="panel-title" id="centerTitle">INTELLIGENCE SUMMARY</span>
+    </div>
+
+    <div class="panel-body" id="centerBody">
+      <!-- Posture card -->
+      <div class="posture-card">
+        <div class="posture-inner">
+          <div class="posture-top">
+            <div>
+              <div class="posture-label">Current Posture</div>
+              <div class="posture-rec">Defend Hendon. Do not expand to Northbridge until the data-compliance risk and candidate-vetting issue are cleared.</div>
+            </div>
+            <div class="posture-conf">
+              <div class="posture-conf-val">73%</div>
+              <div class="posture-conf-label">Confidence</div>
+            </div>
+          </div>
+          <div class="posture-drivers">
+            <div class="posture-driver-label">Why it matters</div>
+            <div class="posture-driver">▸ Hendon remains ultra-marginal (+1.4%) with a rising housing backlash signal.</div>
+            <div class="posture-driver">▸ Special-category canvass notes are blocking outreach actions.</div>
+            <div class="posture-driver">▸ Northbridge expansion has medium confidence due to stale relationship intel.</div>
+          </div>
+          <div class="posture-actions-block">
+            <div class="posture-actions-label">Do now</div>
+            <div class="posture-action-row"><span class="posture-num">1</span><span>Pause affected outreach and route notes to compliance review.</span></div>
+            <div class="posture-action-row"><span class="posture-num">2</span><span>Refresh Hendon housing sentiment and update risk score.</span></div>
+            <div class="posture-action-row"><span class="posture-num">3</span><span>Request candidate-vetting memo before scenario approval.</span></div>
+          </div>
+        </div>
+        <div class="posture-foot">
+          <span>Risk level: <strong style="color:var(--red)">High</strong></span>
+          <span>Updated: 8m ago</span>
+        </div>
+      </div>
+      <!-- Stats summary grid + change feed -->
+      <div class="summary-grid" id="summaryGrid">
+        <div class="intel-card">
+          <div class="intel-card-header">
+            <span class="intel-card-title">Worsening Risks</span>
+          </div>
+          <div class="intel-card-body" id="worseningRisksPanel">
+            <div class="empty-state">Loading…</div>
+          </div>
+        </div>
+        <div class="intel-card">
+          <div class="intel-card-header">
+            <span class="intel-card-title">Candidate Trajectory</span>
+          </div>
+          <div class="intel-card-body" id="candidateTrajPanel">
+            <div class="empty-state">Loading…</div>
+          </div>
+        </div>
+        <div class="intel-card">
+          <div class="intel-card-header">
+            <span class="intel-card-title">Overdue Actions</span>
+          </div>
+          <div class="intel-card-body" id="overdueActionsPanel">
+            <div class="empty-state">Loading…</div>
+          </div>
+        </div>
+        <div class="intel-card">
+          <div class="intel-card-header">
+            <span class="intel-card-title">Stale Relationships</span>
+          </div>
+          <div class="intel-card-body" id="staleRelPanel">
+            <div class="empty-state">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent changes feed -->
+      <div class="intel-card" id="changeFeedCard">
+        <div class="intel-card-header">
+          <span class="intel-card-title">Recent Changes</span>
+          <span class="rail-count" id="changeCount">—</span>
+        </div>
+        <div id="changeFeed">
+          <div class="empty-state">Loading…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Detail + actions -->
+  <div class="right-rail">
+    <div class="rail-header">
+      <button id="rightRailBack" onclick="backToDetail()" style="display:none;background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:0 8px 0 0;font-family:inherit;">← Back</button>
+      <span class="rail-label" id="rightRailLabel">Actions</span>
+      <span class="rail-count" id="actionCount" style="margin-left:auto">—</span>
+    </div>
+    <div class="rail-body">
+      <div id="actionListView">
+        <div id="actionList"><div class="empty-state">Loading…</div></div>
+      </div>
+      <div id="detailView" style="display:none"></div>
+    </div>
+
+    <div id="scenariosSection" style="border-top: 0.5px solid var(--border); padding: 14px 16px;">
+      <div class="rail-label" style="margin-bottom:10px">Scenario Shortcuts</div>
+      <button class="scenario-btn" onclick="runScenario('candidate-swap')">
+        <span class="scenario-icon">↔</span> What if we change candidate?
+      </button>
+      <button class="scenario-btn" onclick="runScenario('stand-aside')">
+        <span class="scenario-icon">◯</span> What if we stand aside?
+      </button>
+      <button class="scenario-btn" onclick="runScenario('tactical-push')">
+        <span class="scenario-icon">▲</span> What if we push tactical vote?
+      </button>
+      <button class="scenario-btn" onclick="runScenario('pact')">
+        <span class="scenario-icon">⇌</span> What if we form a pact?
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Scenario modal ── -->
+<div id="scenarioModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:0.5px solid var(--border-strong);border-radius:10px;width:460px;max-width:90vw;padding:24px;position:relative;">
+    <div style="font-size:14px;font-weight:600;margin-bottom:8px" id="modalTitle">Scenario Analysis</div>
+    <div style="font-size:12px;color:var(--text-mid);margin-bottom:20px" id="modalBody"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="closeModal()" style="padding:6px 16px;border-radius:6px;border:0.5px solid var(--border-strong);background:transparent;color:var(--text-mid);font-family:inherit;font-size:12px;cursor:pointer;">Cancel</button>
+      <button onclick="openArrow()" style="padding:6px 16px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-size:12px;cursor:pointer;font-weight:500;">Open in Arrow ↗</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = 'http://localhost:3000';
+  const TEMPORAL_BASE = 'http://localhost:3000';
+
+  let allRisks = [];
+  let allActions = [];
+  let activeRiskFilter = 'all';
+
+  async function apiFetch(path, base = API_BASE) {
+    const r = await fetch(base + path);
+    if (!r.ok) throw new Error(`${r.status}`);
+    return r.json();
+  }
+
+  function sevClass(s) {
+    if (!s) return 'medium';
+    const v = s.toLowerCase();
+    if (v === 'critical') return 'critical';
+    if (v === 'high') return 'high';
+    if (v === 'medium') return 'medium';
+    return 'low';
+  }
+
+  function relTime(ts) {
+    if (!ts) return '';
+    const d = Date.now() - new Date(ts).getTime();
+    const m = Math.round(d / 60000);
+    if (m < 2) return 'just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.round(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.round(h / 24)}d ago`;
+  }
+
+  function scoreColor(score) {
+    if (score >= 80) return 'var(--red)';
+    if (score >= 60) return 'var(--amber)';
+    if (score >= 40) return '#9CA3AF';
+    return 'var(--green)';
+  }
+
+  // ── Risks ──────────────────────────────────────────────────────────────────
+
+  function renderRisks(risks) {
+    const filtered = activeRiskFilter === 'all'
+      ? risks
+      : risks.filter(r => (r.severity || '').toUpperCase() === activeRiskFilter);
+
+    document.getElementById('riskCount').textContent = `${filtered.length} / ${risks.length}`;
+
+    if (!filtered.length) {
+      document.getElementById('riskList').innerHTML = '<div class="empty-state">No risks match this filter.</div>';
+      return;
+    }
+
+    document.getElementById('riskList').innerHTML = filtered.map((r) => `
+      <div class="risk-item" onclick="selectRisk('${r.id}')" id="riskItem_${r.id}">
+        <div class="risk-sev ${sevClass(r.severity)}"></div>
+        <div class="risk-body">
+          <div class="risk-name">${esc(r.title || r.label || fmt(r.riskType) || r.id)}</div>
+          <div class="risk-meta">
+            <span class="badge ${sevClass(r.severity)}">${fmt(r.severity) || 'Unknown'}</span>
+            ${r.updatedAt ? ` · ${relTime(r.updatedAt)}` : ''}
+          </div>
+        </div>
+        <div class="risk-score" style="color:${scoreColor(r.score || 0)}">${r.score != null ? Math.round(r.score) : '—'}</div>
+      </div>
+    `).join('');
+  }
+
+  function filterRisks(btn, sev) {
+    document.querySelectorAll('[data-sev]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeRiskFilter = sev;
+    renderRisks(allRisks);
+  }
+
+  function selectRisk(id) {
+    const r = allRisks.find(x => x.id === id);
+    if (!r) return;
+    document.querySelectorAll('.risk-item').forEach(el => el.classList.remove('selected'));
+    const el = document.getElementById(`riskItem_${id}`);
+    if (el) el.classList.add('selected');
+    showRightDetail(riskDetailHtml(r), 'Risk Detail');
+  }
+
+  // ── Actions ────────────────────────────────────────────────────────────────
+
+  function actionIcon(a) {
+    if (a.status === 'COMPLETED') return { cls: 'done', glyph: '✓' };
+    if (a.dueDate && new Date(a.dueDate) < new Date()) return { cls: 'overdue', glyph: '!' };
+    return { cls: 'pending', glyph: '→' };
+  }
+
+  function renderActions(actions) {
+    allActions = actions;
+    document.getElementById('actionCount').textContent = actions.length;
+    if (!actions.length) {
+      document.getElementById('actionList').innerHTML = '<div class="empty-state">No actions.</div>';
+      return;
+    }
+    document.getElementById('actionList').innerHTML = actions.map(a => {
+      const { cls, glyph } = actionIcon(a);
+      return `
+        <div class="action-item" onclick="selectAction('${a.id}')">
+          <div class="action-icon ${cls}">${glyph}</div>
+          <div class="action-body">
+            <div class="action-title">${esc(a.title || a.label || fmt(a.actionType) || a.id)}</div>
+            <div class="action-meta">
+              <span class="badge ${cls}">${cls === 'done' ? 'Completed' : cls === 'overdue' ? 'Overdue' : 'Pending'}</span>
+              ${a.dueDate ? ` · due ${relTime(a.dueDate)}` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ── Changes feed ───────────────────────────────────────────────────────────
+
+  function changePolarity(c) {
+    const t = (c.changeType || '').toLowerCase();
+    if (t.includes('improv') || t.includes('complet') || t.includes('expand')) return 'positive';
+    if (t.includes('deterior') || t.includes('hostile') || t.includes('overdu')) return 'negative';
+    return 'neutral';
+  }
+
+  function renderChanges(changes) {
+    document.getElementById('changeCount').textContent = changes.length;
+    if (!changes.length) {
+      document.getElementById('changeFeed').innerHTML = '<div class="empty-state">No recent changes.</div>';
+      return;
+    }
+    document.getElementById('changeFeed').innerHTML = changes.map(c => `
+      <div class="change-item">
+        <div class="change-dot ${changePolarity(c)}"></div>
+        <div class="change-body">
+          <div class="change-desc">${esc(c.summary || fmt(c.changeType) || 'Change recorded')}</div>
+          <div class="change-time">${relTime(c.createdAt || c.occurredAt)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ── Summary panels ─────────────────────────────────────────────────────────
+
+  function renderWorseningRisks(risks) {
+    const el = document.getElementById('worseningRisksPanel');
+    if (!risks || !risks.length) { el.innerHTML = '<div class="empty-state">No worsening risks.</div>'; return; }
+    const max = Math.max(...risks.map(r => Math.abs(r.delta || r.score || 1)));
+    el.innerHTML = risks.slice(0, 5).map(r => `
+      <div class="mini-bar-row" style="padding:4px 14px">
+        <div class="mini-bar-label" title="${esc(r.label || fmt(r.riskType) || r.id)}">${esc((r.label || fmt(r.riskType) || r.id || '').substring(0, 18))}</div>
+        <div class="mini-bar-track">
+          <div class="mini-bar-fill" style="width:${Math.round((Math.abs(r.delta || r.score || 0)) / max * 100)}%;background:var(--red)"></div>
+        </div>
+        <div class="mini-bar-val trend-delta neg">+${r.delta != null ? r.delta.toFixed(1) : '—'}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderCandidateTrajectory(improving, deteriorating) {
+    const el = document.getElementById('candidateTrajPanel');
+    const all = [
+      ...(improving || []).slice(0, 3).map(c => ({ ...c, dir: 'up' })),
+      ...(deteriorating || []).slice(0, 3).map(c => ({ ...c, dir: 'down' })),
+    ];
+    if (!all.length) { el.innerHTML = '<div class="empty-state">No data.</div>'; return; }
+    el.innerHTML = all.map(c => `
+      <div class="trend-item">
+        <div class="trend-arrow ${c.dir === 'up' ? 'down' : 'up'}">${c.dir === 'up' ? '▲' : '▼'}</div>
+        <div class="trend-name">${esc(c.name || c.label || c.id)}</div>
+        <div class="trend-delta ${c.dir === 'up' ? 'pos' : 'neg'}">${c.dir === 'up' ? '+' : '−'}${c.delta != null ? Math.abs(c.delta).toFixed(1) : '—'}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderOverdueActions(actions) {
+    const el = document.getElementById('overdueActionsPanel');
+    const overdue = (actions || []).filter(a => a.dueDate && new Date(a.dueDate) < new Date());
+    if (!overdue.length) { el.innerHTML = '<div class="empty-state" style="color:var(--green);font-size:11px">No overdue actions.</div>'; return; }
+    el.innerHTML = overdue.slice(0, 5).map(a => `
+      <div class="trend-item">
+        <div class="trend-arrow up">!</div>
+        <div class="trend-name">${esc(a.label || fmt(a.actionType) || a.id)}</div>
+        <div class="trend-delta neg" style="font-size:10px">${relTime(a.dueDate)}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderStaleRelationships(rels) {
+    const el = document.getElementById('staleRelPanel');
+    if (!rels || !rels.length) { el.innerHTML = '<div class="empty-state" style="color:var(--green);font-size:11px">All relationships current.</div>'; return; }
+    el.innerHTML = rels.slice(0, 5).map(r => `
+      <div class="trend-item">
+        <div class="trend-arrow up">◌</div>
+        <div class="trend-name">${esc(r.label || r.id || 'Relationship')}</div>
+        <div class="trend-delta neg" style="font-size:10px">stale</div>
+      </div>
+    `).join('');
+  }
+
+  // ── Stats ──────────────────────────────────────────────────────────────────
+
+  function renderStats(risks, actions, changes, staleRels) {
+    const critical = (risks || []).filter(r => (r.severity || '').toUpperCase() === 'CRITICAL').length;
+    const overdue = (actions || []).filter(a => a.dueDate && new Date(a.dueDate) < new Date()).length;
+    const stale = (staleRels || []).length;
+    document.getElementById('statRow').innerHTML = `
+      <div class="stat-cell"><div class="stat-value red">${critical}</div><div class="stat-label">Critical Risks</div></div>
+      <div class="stat-cell"><div class="stat-value amber">${overdue}</div><div class="stat-label">Overdue Actions</div></div>
+      <div class="stat-cell"><div class="stat-value">${(changes || []).length}</div><div class="stat-label">Recent Changes</div></div>
+      <div class="stat-cell"><div class="stat-value ${stale > 0 ? 'amber' : 'green'}">${stale}</div><div class="stat-label">Stale Intel</div></div>
+    `;
+  }
+
+  // ── Load all ───────────────────────────────────────────────────────────────
+
+  async function loadAll() {
+    document.getElementById('refreshBtn').classList.add('spinning');
+    document.getElementById('statusDot').style.background = 'var(--amber)';
+
+    let risks = [], actions = [], changes = [], worseningRisks = [], staleRels = [],
+        improvingCandidates = [], deterioratingCandidates = [];
+
+    const settle = async (fn) => { try { return await fn(); } catch { return null; } };
+
+    [risks, actions, changes, worseningRisks, staleRels, improvingCandidates, deterioratingCandidates] = await Promise.all([
+      settle(() => apiFetch('/api/war-room/risks?limit=50')),
+      settle(() => apiFetch('/api/war-room/actions?limit=30')),
+      settle(() => apiFetch('/api/war-room/recent-changes?limit=30')),
+      settle(() => apiFetch('/api/temporal/war-room/worsening-risks?limit=10')),
+      settle(() => apiFetch('/api/temporal/war-room/stale-relationships')),
+      settle(async () => { const b = await apiFetch('/api/temporal/war-room/briefing'); return b?.improvingCandidates; }),
+      settle(async () => { const b = await apiFetch('/api/temporal/war-room/briefing'); return b?.deterioratingCandidates; }),
+    ]);
+
+    // Normalise arrays
+    risks = Array.isArray(risks) ? risks : (risks?.topRisks || []);
+    actions = Array.isArray(actions) ? actions : (actions?.overdueActions || []);
+    changes = Array.isArray(changes) ? changes : (changes?.recentChanges || []);
+    worseningRisks = Array.isArray(worseningRisks) ? worseningRisks : [];
+    staleRels = Array.isArray(staleRels) ? staleRels : [];
+    improvingCandidates = Array.isArray(improvingCandidates) ? improvingCandidates : [];
+    deterioratingCandidates = Array.isArray(deterioratingCandidates) ? deterioratingCandidates : [];
+
+    allRisks = risks;
+    renderRisks(risks);
+    renderActions(actions);
+    renderChanges(changes);
+    renderStats(risks, actions, changes, staleRels);
+    renderWorseningRisks(worseningRisks);
+    renderCandidateTrajectory(improvingCandidates, deterioratingCandidates);
+    renderOverdueActions(actions);
+    renderStaleRelationships(staleRels);
+
+    _cachedWorseningRisks = worseningRisks;
+    _cachedImproving = improvingCandidates;
+    _cachedDeteriorating = deterioratingCandidates;
+    _cachedStaleRels = staleRels;
+    _cachedChanges = changes;
+
+    const now = new Date();
+    document.getElementById('lastUpdated').textContent = `Updated ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    document.getElementById('statusDot').style.background = 'var(--accent)';
+    document.getElementById('statusDot').style.boxShadow = '0 0 6px var(--accent)';
+    document.getElementById('refreshBtn').classList.remove('spinning');
+  }
+
+  // ── Right rail detail ──────────────────────────────────────────────────────
+
+  function showRightDetail(html, label) {
+    document.getElementById('actionListView').style.display = 'none';
+    document.getElementById('scenariosSection').style.display = 'none';
+    document.getElementById('detailView').style.display = 'block';
+    document.getElementById('detailView').innerHTML = html;
+    document.getElementById('rightRailLabel').textContent = label;
+    document.getElementById('actionCount').style.display = 'none';
+    document.getElementById('rightRailBack').style.display = 'inline';
+  }
+
+  function backToDetail() {
+    document.getElementById('actionListView').style.display = 'block';
+    document.getElementById('scenariosSection').style.display = 'block';
+    document.getElementById('detailView').style.display = 'none';
+    document.getElementById('rightRailLabel').textContent = 'Actions';
+    document.getElementById('actionCount').style.display = '';
+    document.getElementById('rightRailBack').style.display = 'none';
+    document.querySelectorAll('.risk-item').forEach(el => el.classList.remove('selected'));
+  }
+
+  function selectAction(id) {
+    const a = allActions.find(x => x.id === id);
+    if (!a) return;
+    showRightDetail(actionDetailHtml(a), 'Action Detail');
+  }
+
+  function riskDetailHtml(r) {
+    const fields = [
+      ['Likelihood', fmt(r.likelihood)],
+      ['Urgency', fmt(r.urgency)],
+      ['Confidence', fmt(r.confidence)],
+      ['Status', fmt(r.status)],
+      ['Updated', relTime(r.updatedAt)],
+    ].filter(([, v]) => v);
+    return `
+      <div class="detail-section">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span class="badge ${sevClass(r.severity)}">${fmt(r.severity)}</span>
+          <span style="font-size:10px;color:var(--text-muted)">${fmt(r.riskType)}</span>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.4">${esc(r.title || fmt(r.riskType) || r.id)}</div>
+      </div>
+      ${r.description ? `<div class="detail-section"><div class="detail-label">Description</div><div class="detail-text">${esc(r.description)}</div></div>` : ''}
+      ${r.rationale ? `<div class="detail-section"><div class="detail-label">Rationale</div><div class="detail-text">${esc(r.rationale)}</div></div>` : ''}
+      ${r.mitigation ? `<div class="detail-section"><div class="detail-label">Mitigation</div><div class="detail-text">${esc(r.mitigation)}</div></div>` : ''}
+      <div class="detail-section">
+        ${fields.map(([k, v]) => `<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
+      </div>
+    `;
+  }
+
+  function actionDetailHtml(a) {
+    const { cls } = actionIcon(a);
+    const statusLabel = cls === 'done' ? 'Completed' : cls === 'overdue' ? 'Overdue' : 'Pending';
+    const fields = [
+      ['Priority', fmt(a.priority)],
+      ['Due', a.dueDate ? relTime(a.dueDate) : null],
+      ['Status', fmt(a.status)],
+      ['Approval', a.approvalRequirement && a.approvalRequirement !== 'NONE' ? fmt(a.approvalRequirement) : null],
+    ].filter(([, v]) => v);
+    return `
+      <div class="detail-section">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span class="badge ${cls}">${statusLabel}</span>
+          <span style="font-size:10px;color:var(--text-muted)">${fmt(a.actionType)}</span>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.4">${esc(a.title || fmt(a.actionType) || a.id)}</div>
+      </div>
+      ${a.description ? `<div class="detail-section"><div class="detail-label">Description</div><div class="detail-text">${esc(a.description)}</div></div>` : ''}
+      ${a.rationale ? `<div class="detail-section"><div class="detail-label">Rationale</div><div class="detail-text">${esc(a.rationale)}</div></div>` : ''}
+      ${a.expectedBenefit ? `<div class="detail-section"><div class="detail-label">Expected Benefit</div><div class="detail-text">${esc(a.expectedBenefit)}</div></div>` : ''}
+      ${a.downsideIfIgnored ? `<div class="detail-section"><div class="detail-label">Downside If Ignored</div><div class="detail-text">${esc(a.downsideIfIgnored)}</div></div>` : ''}
+      <div class="detail-section">
+        ${fields.map(([k, v]) => `<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
+      </div>
+    `;
+  }
+
+  // ── Scenarios ──────────────────────────────────────────────────────────────
+
+  const SCENARIOS = {
+    'candidate-swap': {
+      title: 'Candidate Swap Analysis',
+      body: 'Run an Arrow simulation comparing current candidate viability against the next best alternative. Opens Arrow with a pre-configured counterfactual scenario.',
+    },
+    'stand-aside': {
+      title: 'Stand-Aside Scenario',
+      body: 'Model the vote transfer impact if your candidate withdraws to consolidate progressive/conservative vote share. Opens Arrow with vote-transfer parameters.',
+    },
+    'tactical-push': {
+      title: 'Tactical Vote Push',
+      body: 'Simulate the swing required if your campaign amplifies tactical voting messaging to 10–30% of crossover voters in target blocs.',
+    },
+    'pact': {
+      title: 'Electoral Pact Modelling',
+      body: 'Model a non-aggression or reciprocal withdrawal pact between two parties in a target seat. Opens Arrow for multi-seat simulation.',
+    },
+  };
+
+  function runScenario(key) {
+    const s = SCENARIOS[key];
+    document.getElementById('modalTitle').textContent = s.title;
+    document.getElementById('modalBody').textContent = s.body;
+    document.getElementById('scenarioModal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('scenarioModal').style.display = 'none';
+  }
+
+  function openArrow() {
+    window.open('arrow.html', '_blank');
+    closeModal();
+  }
+
+  function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function fmt(s) {
+    if (!s) return '';
+    return String(s)
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  // ── Cached data for view re-renders ────────────────────────────────────────
+
+  let _cachedWorseningRisks = [], _cachedImproving = [], _cachedDeteriorating = [],
+      _cachedStaleRels = [], _cachedChanges = [];
+
+  const OVERVIEW_BODY_HTML = `
+    <div class="posture-card">
+      <div class="posture-inner">
+        <div class="posture-top">
+          <div>
+            <div class="posture-label">Current Posture</div>
+            <div class="posture-rec">Defend Hendon. Do not expand to Northbridge until the data-compliance risk and candidate-vetting issue are cleared.</div>
+          </div>
+          <div class="posture-conf">
+            <div class="posture-conf-val">73%</div>
+            <div class="posture-conf-label">Confidence</div>
+          </div>
+        </div>
+        <div class="posture-drivers">
+          <div class="posture-driver-label">Why it matters</div>
+          <div class="posture-driver">▸ Hendon remains ultra-marginal (+1.4%) with a rising housing backlash signal.</div>
+          <div class="posture-driver">▸ Special-category canvass notes are blocking outreach actions.</div>
+          <div class="posture-driver">▸ Northbridge expansion has medium confidence due to stale relationship intel.</div>
+        </div>
+        <div class="posture-actions-block">
+          <div class="posture-actions-label">Do now</div>
+          <div class="posture-action-row"><span class="posture-num">1</span><span>Pause affected outreach and route notes to compliance review.</span></div>
+          <div class="posture-action-row"><span class="posture-num">2</span><span>Refresh Hendon housing sentiment and update risk score.</span></div>
+          <div class="posture-action-row"><span class="posture-num">3</span><span>Request candidate-vetting memo before scenario approval.</span></div>
+        </div>
+      </div>
+      <div class="posture-foot">
+        <span>Risk level: <strong style="color:var(--red)">High</strong></span>
+        <span>Updated: 8m ago</span>
+      </div>
+    </div>
+    <div class="summary-grid" id="summaryGrid">
+      <div class="intel-card">
+        <div class="intel-card-header"><span class="intel-card-title">Worsening Risks</span></div>
+        <div class="intel-card-body" id="worseningRisksPanel"><div class="empty-state">Loading…</div></div>
+      </div>
+      <div class="intel-card">
+        <div class="intel-card-header"><span class="intel-card-title">Candidate Trajectory</span></div>
+        <div class="intel-card-body" id="candidateTrajPanel"><div class="empty-state">Loading…</div></div>
+      </div>
+      <div class="intel-card">
+        <div class="intel-card-header"><span class="intel-card-title">Overdue Actions</span></div>
+        <div class="intel-card-body" id="overdueActionsPanel"><div class="empty-state">Loading…</div></div>
+      </div>
+      <div class="intel-card">
+        <div class="intel-card-header"><span class="intel-card-title">Stale Relationships</span></div>
+        <div class="intel-card-body" id="staleRelPanel"><div class="empty-state">Loading…</div></div>
+      </div>
+    </div>
+    <div class="intel-card" id="changeFeedCard">
+      <div class="intel-card-header">
+        <span class="intel-card-title">Recent Changes</span>
+        <span class="rail-count" id="changeCount">—</span>
+      </div>
+      <div id="changeFeed"><div class="empty-state">Loading…</div></div>
+    </div>`;
+
+  // ── View switching ─────────────────────────────────────────────────────────
+
+  let currentView = 'overview';
+
+  function showView(name) {
+    currentView = name;
+    document.querySelectorAll('.topbar-nav a[data-view]').forEach(x => x.classList.toggle('active', x.dataset.view === name));
+
+    const title = document.getElementById('centerTitle');
+    const body  = document.getElementById('centerBody');
+
+    backToDetail();
+
+    if (name === 'overview') {
+      title.textContent = 'INTELLIGENCE SUMMARY';
+      body.innerHTML = OVERVIEW_BODY_HTML;
+      renderWorseningRisks(_cachedWorseningRisks);
+      renderCandidateTrajectory(_cachedImproving, _cachedDeteriorating);
+      renderOverdueActions(allActions);
+      renderStaleRelationships(_cachedStaleRels);
+      renderChanges(_cachedChanges);
+      return;
+    }
+
+    if (name === 'risks') {
+      title.textContent = 'ALL RISKS';
+      body.innerHTML = allRisks.length ? `
+        <div class="intel-card" style="overflow:hidden">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="border-bottom:0.5px solid var(--border)">
+                <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);width:40%">Risk</th>
+                <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Type</th>
+                <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Severity</th>
+                <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Status</th>
+                <th style="padding:8px 14px;text-align:right;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allRisks.map(r => `
+                <tr onclick="selectRisk('${r.id}')" style="border-bottom:0.5px solid var(--border);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface-3)'" onmouseout="this.style.background=''">
+                  <td style="padding:9px 14px;font-weight:500;color:var(--text)">${esc(r.title || fmt(r.riskType) || r.id)}</td>
+                  <td style="padding:9px 14px;color:var(--text-muted)">${fmt(r.riskType)}</td>
+                  <td style="padding:9px 14px"><span class="badge ${sevClass(r.severity)}">${fmt(r.severity)}</span></td>
+                  <td style="padding:9px 14px;color:var(--text-muted)">${fmt(r.status)}</td>
+                  <td style="padding:9px 14px;text-align:right;color:var(--text-muted)">${relTime(r.updatedAt)}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>` : '<div class="empty-state">No risks.</div>';
+      return;
+    }
+
+    if (name === 'actions') {
+      title.textContent = 'ALL ACTIONS';
+      body.innerHTML = allActions.length ? `
+        <div class="intel-card" style="overflow:hidden">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="border-bottom:0.5px solid var(--border)">
+                <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);width:40%">Action</th>
+                <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Type</th>
+                <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Priority</th>
+                <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Status</th>
+                <th style="padding:8px 14px;text-align:right;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Due</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allActions.map(a => {
+                const { cls } = actionIcon(a);
+                const statusLabel = cls === 'done' ? 'Completed' : cls === 'overdue' ? 'Overdue' : 'Pending';
+                return `
+                <tr onclick="selectAction('${a.id}')" style="border-bottom:0.5px solid var(--border);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface-3)'" onmouseout="this.style.background=''">
+                  <td style="padding:9px 14px;font-weight:500;color:var(--text)">${esc(a.title || fmt(a.actionType) || a.id)}</td>
+                  <td style="padding:9px 14px;color:var(--text-muted)">${fmt(a.actionType)}</td>
+                  <td style="padding:9px 14px;color:var(--text-muted)">${fmt(a.priority)}</td>
+                  <td style="padding:9px 14px"><span class="badge ${cls}">${statusLabel}</span></td>
+                  <td style="padding:9px 14px;text-align:right;color:${cls === 'overdue' ? 'var(--red)' : 'var(--text-muted)'}">${a.dueDate ? relTime(a.dueDate) : '—'}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>` : '<div class="empty-state">No actions.</div>';
+      return;
+    }
+
+    if (name === 'scenarios') {
+      title.textContent = 'SCENARIOS';
+      const cards = Object.entries(SCENARIOS).map(([key, s]) => `
+        <div class="intel-card" style="cursor:pointer" onclick="runScenario('${key}')">
+          <div class="intel-card-header">
+            <span class="intel-card-title">${s.title}</span>
+            <span style="font-size:16px">${{ 'candidate-swap':'↔', 'stand-aside':'◯', 'tactical-push':'▲', 'pact':'⇌' }[key]}</span>
+          </div>
+          <div style="padding:12px 14px">
+            <div style="font-size:12px;color:var(--text-mid);line-height:1.6;margin-bottom:12px">${esc(s.body)}</div>
+            <button style="padding:5px 14px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-size:11px;font-weight:500;cursor:pointer">Open in Arrow ↗</button>
+          </div>
+        </div>`).join('');
+      body.innerHTML = `<div class="summary-grid">${cards}</div>`;
+      return;
+    }
+  }
+
+  document.querySelectorAll('.topbar-nav a[data-view]').forEach(a => {
+    a.addEventListener('click', e => { e.preventDefault(); showView(a.dataset.view); });
+  });
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  loadAll();
+  setInterval(loadAll, 5 * 60 * 1000);
+</script>
+</body>
+</html>

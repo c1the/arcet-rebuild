@@ -1,0 +1,1 @@
+{"_comment": "Example extracted claim — delete this line in real cases. One JSON object per line.", "claim_id": "cl-0001", "evidence_id": "ev-0001", "claim": "Atomic factual claim extracted from the evidence item.", "actors": [], "event_time": "1990-11-01T00:00:00Z", "knowledge_time": "1990-11-02T08:00:00Z", "polarity": "neutral", "confidence": null}

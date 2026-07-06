@@ -1,0 +1,39 @@
+{
+  "case_id": "_template_case",
+  "event_name": "",
+  "event_type": "",
+  "target_actor": "",
+  "target_organisation": "",
+  "country_jurisdiction": "",
+  "actual_event_date": null,
+  "forecast_cutoff": null,
+  "forecast_horizon_days": null,
+  "prediction_question": "",
+  "outcome_classes": ["positive", "negative"],
+  "positive_outcome_definition": "",
+  "negative_outcome_definition": "",
+  "data_window": {
+    "start": null,
+    "end": null
+  },
+  "allowed_sources": [
+    "contemporaneous_news",
+    "official_statements",
+    "voting_records",
+    "polling",
+    "public_records",
+    "manual_internal_notes"
+  ],
+  "excluded_sources": [
+    "post_event_retrospectives",
+    "later_biographies",
+    "outcome_revealing_summaries",
+    "post_cutoff_articles",
+    "post_cutoff_analysis",
+    "undated_sources"
+  ],
+  "known_limitations": [],
+  "status": "defined",
+  "frozen_at": null,
+  "frozen_by": null
+}

@@ -1,0 +1,39 @@
+{
+  "name": "@arcet/ontology",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Arcet political ontology — shared data model and domain layer for candidate selection, FPTP strategy, relationship graph, faction-risk, policy radius, action engine, compliance, and war-room.",
+  "type": "module",
+  "main": "src/domain/ontology/index.ts",
+  "scripts": {
+    "prisma:format": "prisma format",
+    "prisma:validate": "prisma validate",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "db:seed": "tsx src/domain/ontology/seed.ts",
+    "temporal:seed": "tsx src/domain/temporal/seed.ts",
+    "ci:seed": "tsx src/domain/candidate-intelligence/seed.ts",
+    "typecheck": "tsc --noEmit",
+    "typecheck:isolated": "tsc -p tsconfig.check.json --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/rules.test.ts tests/http.test.ts tests/validators.test.ts tests/temporal-rules.test.ts tests/temporal-validators.test.ts tests/candidate-intelligence-rules.test.ts tests/candidate-intelligence-validators.test.ts"
+  },
+  "prisma": {
+    "seed": "tsx src/domain/ontology/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.0",
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.5"
+  }
+}

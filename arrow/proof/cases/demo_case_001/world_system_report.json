@@ -1,0 +1,24 @@
+{
+  "case_id": "demo_case_001",
+  "generated_at": "2026-07-06T22:18:02.472994+00:00",
+  "systems_run": [
+    "incentive",
+    "faction",
+    "ideology",
+    "network_contagion",
+    "institutional",
+    "media_pressure"
+  ],
+  "high_signal_systems": [
+    "faction"
+  ],
+  "low_signal_systems": [
+    "incentive",
+    "ideology",
+    "network_contagion",
+    "institutional",
+    "media_pressure"
+  ],
+  "validation_issues": [],
+  "notes": "Partial theory outputs for the future aggregator; heuristic, uncalibrated, and not a forecast."
+}

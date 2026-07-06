@@ -1,0 +1,21 @@
+{
+  "case_id": "demo_case_001",
+  "generated_at": "2026-07-06T22:18:02.375553+00:00",
+  "evidence_count": 1,
+  "claim_count": 2,
+  "actor_count": 1,
+  "claim_types_present": [
+    "elite_signal",
+    "institutional_constraint"
+  ],
+  "world_system_inputs": {
+    "incentive": 0.0,
+    "faction": 0.25,
+    "ideology": 0.0,
+    "network_contagion": 0.0,
+    "institutional": 0.2,
+    "media_pressure": 0.0
+  },
+  "validation_issues": [],
+  "notes": "World-system inputs take the max weighted_score of their contributing claim types; see _WORLD_SYSTEM_SOURCES."
+}

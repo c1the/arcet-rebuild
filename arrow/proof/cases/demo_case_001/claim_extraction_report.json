@@ -1,0 +1,14 @@
+{
+  "case_id": "demo_case_001",
+  "generated_at": "2026-07-06T22:18:02.290236+00:00",
+  "extractor_name": "rule_based_keyword_extractor",
+  "extractor_version": "0.1.0",
+  "evidence_items_read": 1,
+  "claims_generated": 2,
+  "claims_by_type": {
+    "elite_signal": 1,
+    "institutional_constraint": 1
+  },
+  "validation_issues": [],
+  "notes": "Rule-based keyword extraction; strength/confidence are heuristic, not calibrated."
+}

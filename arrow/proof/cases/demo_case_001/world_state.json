@@ -1,0 +1,77 @@
+{
+  "case_id": "demo_case_001",
+  "generated_at": "2026-07-06T22:18:02.375553+00:00",
+  "cutoff_date": "2001-06-01T00:00:00+00:00",
+  "target_actor": "Alexandra Voss, leader of the Unity Party (fictional)",
+  "target_organisation": "Unity Party (fictional)",
+  "evidence_count": 1,
+  "claim_count": 2,
+  "actors": [
+    {
+      "actor": "unattributed",
+      "claim_count": 2,
+      "average_strength": 0.45,
+      "average_confidence": 0.5,
+      "dominant_claim_types": [
+        "elite_signal",
+        "institutional_constraint"
+      ],
+      "supporting_claim_ids": [
+        "cl-0001",
+        "cl-0002"
+      ],
+      "pressure_score": 0.175,
+      "notes": "pressure = polarity-weighted mean of strength*confidence, clamped to [0,1]"
+    }
+  ],
+  "claim_type_signals": [
+    {
+      "claim_type": "elite_signal",
+      "claim_count": 1,
+      "average_strength": 0.5,
+      "average_confidence": 0.5,
+      "weighted_score": 0.25,
+      "supporting_claim_ids": [
+        "cl-0001"
+      ]
+    },
+    {
+      "claim_type": "institutional_constraint",
+      "claim_count": 1,
+      "average_strength": 0.4,
+      "average_confidence": 0.5,
+      "weighted_score": 0.2,
+      "supporting_claim_ids": [
+        "cl-0002"
+      ]
+    }
+  ],
+  "world_system_inputs": {
+    "incentive": 0.0,
+    "faction": 0.25,
+    "ideology": 0.0,
+    "network_contagion": 0.0,
+    "institutional": 0.2,
+    "media_pressure": 0.0
+  },
+  "top_claims": [
+    {
+      "claim_id": "cl-0001",
+      "claim_type": "elite_signal",
+      "weighted_score": 0.25,
+      "text_span": "The letter is understood to carry roughly thirty signatures, short of the forty-five required to trigger a formal challenge under party rules."
+    },
+    {
+      "claim_id": "cl-0002",
+      "claim_type": "institutional_constraint",
+      "weighted_score": 0.2,
+      "text_span": "The letter is understood to carry roughly thirty signatures, short of the forty-five required to trigger a formal challenge under party rules."
+    }
+  ],
+  "limitations": [
+    "All scores are heuristic aggregates of rule-based keyword extraction; they are not calibrated probabilities.",
+    "Actor resolution is naive: the rule extractor attributes all claims to 'unattributed', so actor-level aggregation is coarse.",
+    "Evidence packet is very small (1 item(s)); aggregates are dominated by individual sources."
+  ],
+  "notes": "Built by world_state_builder.py from extracted_claims.jsonl."
+}

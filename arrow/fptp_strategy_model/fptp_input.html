@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FPTP Model — Input</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f3;
+      color: #1a1a18;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .page {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .page-header { margin-bottom: 2.5rem; }
+    .page-header h1 { font-size: 20px; font-weight: 500; }
+    .page-header p { font-size: 13px; color: #888780; margin-top: 3px; }
+
+    .section { margin-bottom: 2.5rem; }
+
+    .section-label {
+      font-size: 11px;
+      color: #888780;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.75rem;
+    }
+
+    .card {
+      background: #fff;
+      border: 0.5px solid rgba(0,0,0,0.12);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .field-row:last-child { margin-bottom: 0; }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+
+    label {
+      font-size: 12px;
+      color: #5F5E5A;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      height: 36px;
+      padding: 0 10px;
+      border: 0.5px solid rgba(0,0,0,0.18);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff;
+      color: #1a1a18;
+      width: 100%;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: #1D9E75;
+      box-shadow: 0 0 0 2px rgba(29,158,117,0.15);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #1D9E75;
+      height: 4px;
+      cursor: pointer;
+    }
+
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .range-label {
+      font-size: 13px;
+      color: #5F5E5A;
+      width: 120px;
+      flex-shrink: 0;
+    }
+
+    .range-val {
+      font-size: 13px;
+      font-weight: 500;
+      color: #1a1a18;
+      width: 40px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      height: 34px;
+      padding: 0 14px;
+      border: 0.5px solid rgba(0,0,0,0.18);
+      border-radius: 8px;
+      background: #fff;
+      color: #1a1a18;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover { background: #f5f5f3; }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-primary {
+      background: #1a1a18;
+      color: #fff;
+      border-color: #1a1a18;
+    }
+
+    .btn-primary:hover { background: #333; }
+
+    .btn-danger { color: #A32D2D; border-color: rgba(163,45,45,0.3); }
+    .btn-danger:hover { background: #FCEBEB; }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      align-items: center;
+    }
+
+    /* Candidate axis */
+    .axis-wrap {
+      position: relative;
+      height: 40px;
+      margin: 12px 0 8px;
+    }
+
+    .axis-line {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(0,0,0,0.12);
+    }
+
+    .axis-marker {
+      position: absolute;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .axis-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #1D9E75;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px rgba(29,158,117,0.5);
+    }
+
+    .axis-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: #1a1a18;
+      white-space: nowrap;
+      margin-top: 14px;
+    }
+
+    .axis-end-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #888780;
+      margin-top: 4px;
+    }
+
+    /* Candidate card */
+    .candidate-card {
+      border: 0.5px solid rgba(0,0,0,0.10);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fafaf8;
+    }
+
+    .candidate-card:last-of-type { margin-bottom: 0; }
+
+    .candidate-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    /* District card */
+    .district-card {
+      border: 0.5px solid rgba(0,0,0,0.10);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fafaf8;
+    }
+
+    .district-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .district-title {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .segment-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .seg-label {
+      font-size: 12px;
+      color: #5F5E5A;
+      width: 50px;
+      flex-shrink: 0;
+    }
+
+    .seg-val {
+      font-size: 12px;
+      font-weight: 500;
+      width: 36px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .seg-total {
+      font-size: 12px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 0.5px solid rgba(0,0,0,0.08);
+    }
+
+    .seg-total.ok { color: #0F6E56; }
+    .seg-total.err { color: #A32D2D; }
+
+    /* Action checkboxes */
+    .action-item {
+      border: 0.5px solid rgba(0,0,0,0.10);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .action-item:last-child { margin-bottom: 0; }
+
+    .action-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      background: #fafaf8;
+    }
+
+    .action-toggle:hover { background: #f0efe8; }
+
+    .action-toggle input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #1D9E75;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .action-name { font-size: 14px; font-weight: 500; }
+    .action-desc { font-size: 12px; color: #888780; margin-left: auto; }
+
+    .action-params {
+      display: none;
+      padding: 12px;
+      border-top: 0.5px solid rgba(0,0,0,0.08);
+      background: #fff;
+    }
+
+    .action-params.visible { display: block; }
+
+    /* Weights */
+    .weight-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .weight-row:last-child { margin-bottom: 0; }
+
+    .weight-name {
+      font-size: 13px;
+      color: #1a1a18;
+      width: 130px;
+      flex-shrink: 0;
+    }
+
+    .weight-sub {
+      font-size: 11px;
+      color: #888780;
+      display: block;
+    }
+
+    /* JSON output */
+    .json-output {
+      background: #1a1a18;
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: "Courier New", monospace;
+      font-size: 12px;
+      color: #c0bdb5;
+      white-space: pre;
+      overflow-x: auto;
+      max-height: 320px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    .divider {
+      border: none;
+      border-top: 0.5px solid rgba(0,0,0,0.08);
+      margin: 14px 0;
+    }
+
+    .actor-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .actor-select-wrap label {
+      font-size: 13px;
+      color: #5F5E5A;
+      flex-shrink: 0;
+    }
+
+    .actor-select-wrap select { max-width: 180px; }
+
+    .hint { font-size: 12px; color: #888780; margin-top: 5px; }
+
+    .copy-confirm {
+      font-size: 12px;
+      color: #0F6E56;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-header">
+    <h1>FPTP model — configure election</h1>
+    <p>Fill in the sections below. Copy the JSON at the bottom and pass it to the model.</p>
+  </div>
+
+  <!-- 1. CANDIDATES -->
+  <div class="section">
+    <div class="section-label">1 — Candidates</div>
+    <div class="card">
+      <div id="candidate-list"></div>
+      <div class="btn-row">
+        <button class="btn" onclick="addCandidate()">+ Add candidate</button>
+      </div>
+      <hr class="divider">
+      <div class="axis-end-labels" style="padding: 0 2px;">
+        <span>← left</span><span>right →</span>
+      </div>
+      <div class="axis-wrap" id="axis-wrap">
+        <div class="axis-line"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. ELECTION SETUP -->
+  <div class="section">
+    <div class="section-label">2 — Election setup</div>
+    <div class="card">
+      <div class="actor-select-wrap">
+        <label>Optimising for</label>
+        <select id="actor-select"><option value="">— pick candidate —</option></select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Governing threshold (seats)</label>
+          <input type="number" id="threshold" value="4" min="0" oninput="updateJSON()">
+          <span class="hint">Seats needed to control. 0 = not modelled.</span>
+        </div>
+        <div class="field">
+          <label>Simulations</label>
+          <input type="number" id="n-sims" value="600" min="100" step="100" oninput="updateJSON()">
+        </div>
+        <div class="field">
+          <label>κ (confidence gate)</label>
+          <input type="number" id="kappa" value="0.05" min="0" step="0.01" oninput="updateJSON()">
+          <span class="hint">Min gap to call a winner.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. DISTRICTS -->
+  <div class="section">
+    <div class="section-label">3 — Districts</div>
+    <div class="card">
+      <div id="district-list"></div>
+      <div class="btn-row">
+        <button class="btn" onclick="addDistrict()">+ Add district</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. ACTIONS -->
+  <div class="section">
+    <div class="section-label">4 — Actions to evaluate</div>
+    <div class="card">
+      <p class="hint" style="margin-bottom:12px">Select the actions you want the model to score and rank.</p>
+      <div id="action-list"></div>
+    </div>
+  </div>
+
+  <!-- 5. OBJECTIVE & RISK -->
+  <div class="section">
+    <div class="section-label">5 — Objective &amp; risk</div>
+    <div class="card">
+      <p style="font-size:13px;color:#5F5E5A;margin-bottom:14px">Set weights to zero to ignore that objective. They don't need to sum to 1.</p>
+
+      <div class="weight-row">
+        <div class="weight-name">Expected seats <span class="weight-sub">w_seats</span></div>
+        <input type="range" min="0" max="2" step="0.1" value="1.0" id="w-seats" oninput="updateJSON(); this.nextElementSibling.textContent = parseFloat(this.value).toFixed(1)">
+        <span class="range-val">1.0</span>
+      </div>
+      <div class="weight-row">
+        <div class="weight-name">Prob. of majority <span class="weight-sub">w_majority</span></div>
+        <input type="range" min="0" max="2" step="0.1" value="0.0" id="w-majority" oninput="updateJSON(); this.nextElementSibling.textContent = parseFloat(this.value).toFixed(1)">
+        <span class="range-val">0.0</span>
+      </div>
+      <div class="weight-row">
+        <div class="weight-name">Vote share <span class="weight-sub">w_vote</span></div>
+        <input type="range" min="0" max="2" step="0.1" value="0.0" id="w-vote" oninput="updateJSON(); this.nextElementSibling.textContent = parseFloat(this.value).toFixed(1)">
+        <span class="range-val">0.0</span>
+      </div>
+
+      <hr class="divider">
+
+      <div class="weight-row">
+        <div class="weight-name">Risk aversion λ <span class="weight-sub">penalises downside</span></div>
+        <input type="range" min="0" max="1" step="0.05" value="0.3" id="lambda-risk" oninput="updateJSON(); this.nextElementSibling.textContent = parseFloat(this.value).toFixed(2)">
+        <span class="range-val">0.30</span>
+      </div>
+
+      <div class="field-row" style="margin-top:12px">
+        <div class="field">
+          <label>Risk metric</label>
+          <select id="risk-metric" onchange="updateJSON()">
+            <option value="std">std — spread of outcomes</option>
+            <option value="var">var — variance</option>
+            <option value="cvar">cvar — expected shortfall (tail)</option>
+            <option value="lcb_gap">lcb_gap — mean minus lower bound</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. JSON OUTPUT -->
+  <div class="section">
+    <div class="section-label">6 — JSON output</div>
+    <div class="card">
+      <p class="hint" style="margin-bottom:10px">Copy this and pass it to the Python model.</p>
+      <pre class="json-output" id="json-output">{}</pre>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="copyJSON()">Copy JSON</button>
+        <button class="btn btn-primary" onclick="goToResults()" style="background:#0F6E56;border-color:#0F6E56">Run model &rarr;</button>
+        <span class="copy-confirm" id="copy-confirm">Copied!</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let candidates = [];
+  let districts = [];
+  let districtCount = 0;
+  let candidateCount = 0;
+
+  const COLORS = ["#1D9E75","#378ADD","#D85A30","#BA7517","#D4537E","#639922"];
+  const ACTION_DEFS = [
+    { type: "status_quo",  label: "Status quo",         desc: "do nothing — reference baseline",  params: [] },
+    { type: "allocate",    label: "Allocate resources",  desc: "shift effort to marginal seats",   params: ["effort"] },
+    { type: "mobilise",    label: "Mobilise supporters", desc: "raise turnout among your voters",  params: ["effort"] },
+    { type: "reposition",  label: "Reposition",          desc: "move toward centre (risks base)",  params: ["gain","base_cost","reputational_cost"] },
+    { type: "release_info",label: "Publish viability poll", desc: "sharpen voter coordination",   params: ["sigma_factor"] },
+    { type: "withdraw",    label: "Withdraw",            desc: "stand down everywhere",             params: [] },
+    { type: "endorse",     label: "Withdraw + endorse",  desc: "stand down and back a candidate",  params: ["endorsee","base_transfer"] },
+  ];
+
+  function addCandidate() {
+    candidateCount++;
+    const id = "c" + candidateCount;
+    const defaultNames = ["GRN","SOC","CON","LIB","NAT"];
+    const name = defaultNames[candidates.length] || "P" + candidateCount;
+    candidates.push({ id, name, position: (candidates.length * 0.8) - 0.8, valence: 0.0 });
+    renderCandidates();
+    updateActorSelect();
+    updateJSON();
+  }
+
+  function removeCandidate(id) {
+    candidates = candidates.filter(c => c.id !== id);
+    renderCandidates();
+    updateActorSelect();
+    updateJSON();
+  }
+
+  function renderCandidates() {
+    const el = document.getElementById("candidate-list");
+    el.innerHTML = "";
+    candidates.forEach((c, i) => {
+      const color = COLORS[i % COLORS.length];
+      el.innerHTML += `
+        <div class="candidate-card" id="ccard-${c.id}">
+          <div class="candidate-header">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="width:10px;height:10px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0"></span>
+              <input type="text" value="${c.name}" style="width:100px;font-weight:500"
+                oninput="candidates[${i}].name=this.value; updateAxisViz(); updateActorSelect(); updateJSON()">
+            </div>
+            <button class="btn btn-danger" style="height:28px;font-size:12px" onclick="removeCandidate('${c.id}')">Remove</button>
+          </div>
+          <div class="range-row">
+            <span class="range-label" style="font-size:12px;color:#888780">Left–right position</span>
+            <input type="range" min="-2" max="2" step="0.1" value="${c.position}"
+              oninput="candidates[${i}].position=parseFloat(this.value); this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1); updateAxisViz(); updateJSON()">
+            <span class="range-val">${c.position.toFixed(1)}</span>
+          </div>
+          <div class="range-row">
+            <span class="range-label" style="font-size:12px;color:#888780">Valence bonus</span>
+            <input type="range" min="-1" max="1" step="0.05" value="${c.valence}"
+              oninput="candidates[${i}].valence=parseFloat(this.value); this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2); updateJSON()">
+            <span class="range-val">${c.valence.toFixed(2)}</span>
+          </div>
+        </div>`;
+    });
+    updateAxisViz();
+  }
+
+  function updateAxisViz() {
+    const wrap = document.getElementById("axis-wrap");
+    const existing = wrap.querySelectorAll(".axis-marker");
+    existing.forEach(e => e.remove());
+    candidates.forEach((c, i) => {
+      const pct = ((c.position + 2) / 4) * 100;
+      const color = COLORS[i % COLORS.length];
+      const marker = document.createElement("div");
+      marker.className = "axis-marker";
+      marker.style.left = pct + "%";
+      marker.style.top = "4px";
+      marker.innerHTML = `<div class="axis-dot" style="background:${color};box-shadow:0 0 0 1px ${color}40"></div>
+        <span class="axis-name">${c.name}</span>`;
+      wrap.appendChild(marker);
+    });
+  }
+
+  function updateActorSelect() {
+    const sel = document.getElementById("actor-select");
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— pick candidate —</option>';
+    candidates.forEach(c => {
+      sel.innerHTML += `<option value="${c.name}" ${c.name === current ? 'selected' : ''}>${c.name}</option>`;
+    });
+    updateEndorseeSelects();
+    updateJSON();
+  }
+
+  function addDistrict() {
+    districtCount++;
+    const id = "D" + districtCount;
+    districts.push({ id, name: id, electorate: 70000, turnout: 0.66, region: "", left: 33, centre: 34, right: 33 });
+    renderDistricts();
+    updateActionEffortRows();
+    updateJSON();
+  }
+
+  function removeDistrict(idx) {
+    districts.splice(idx, 1);
+    renderDistricts();
+    updateActionEffortRows();
+    updateJSON();
+  }
+
+  function renderDistricts() {
+    const el = document.getElementById("district-list");
+    el.innerHTML = "";
+    districts.forEach((d, i) => {
+      const total = d.left + d.centre + d.right;
+      const totalClass = Math.abs(total - 100) < 1 ? "ok" : "err";
+      el.innerHTML += `
+        <div class="district-card">
+          <div class="district-header">
+            <span class="district-title">District ${i+1}</span>
+            <button class="btn btn-danger" style="height:28px;font-size:12px" onclick="removeDistrict(${i})">Remove</button>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>ID / name</label>
+              <input type="text" value="${d.name}" oninput="districts[${i}].name=this.value; updateActionEffortRows(); updateJSON()">
+            </div>
+            <div class="field">
+              <label>Electorate size</label>
+              <input type="number" value="${d.electorate}" oninput="districts[${i}].electorate=parseInt(this.value)||0; updateJSON()">
+            </div>
+            <div class="field">
+              <label>Turnout (0–1)</label>
+              <input type="number" value="${d.turnout}" step="0.01" min="0" max="1" oninput="districts[${i}].turnout=parseFloat(this.value)||0; updateJSON()">
+            </div>
+            <div class="field">
+              <label>Region (optional)</label>
+              <input type="text" value="${d.region}" placeholder="e.g. north" oninput="districts[${i}].region=this.value; updateJSON()">
+            </div>
+          </div>
+          <p style="font-size:12px;color:#5F5E5A;margin:10px 0 8px">Voter segments (should sum to 100%)</p>
+          <div class="segment-row">
+            <span class="seg-label">Left</span>
+            <input type="range" min="0" max="100" value="${d.left}" style="flex:1"
+              oninput="districts[${i}].left=parseInt(this.value); renderDistricts(); updateJSON()">
+            <span class="seg-val">${d.left}%</span>
+          </div>
+          <div class="segment-row">
+            <span class="seg-label">Centre</span>
+            <input type="range" min="0" max="100" value="${d.centre}" style="flex:1"
+              oninput="districts[${i}].centre=parseInt(this.value); renderDistricts(); updateJSON()">
+            <span class="seg-val">${d.centre}%</span>
+          </div>
+          <div class="segment-row">
+            <span class="seg-label">Right</span>
+            <input type="range" min="0" max="100" value="${d.right}" style="flex:1"
+              oninput="districts[${i}].right=parseInt(this.value); renderDistricts(); updateJSON()">
+            <span class="seg-val">${d.right}%</span>
+          </div>
+          <div class="seg-total ${totalClass}">Total: ${total}% ${totalClass === 'err' ? '— must equal 100%' : '✓'}</div>
+        </div>`;
+    });
+  }
+
+  function renderActions() {
+    const el = document.getElementById("action-list");
+    el.innerHTML = "";
+    ACTION_DEFS.forEach(a => {
+      el.innerHTML += `
+        <div class="action-item">
+          <label class="action-toggle">
+            <input type="checkbox" id="act-${a.type}" onchange="toggleActionParams('${a.type}'); updateJSON()">
+            <span class="action-name">${a.label}</span>
+            <span class="action-desc">${a.desc}</span>
+          </label>
+          <div class="action-params" id="params-${a.type}">
+            ${renderActionParams(a)}
+          </div>
+        </div>`;
+    });
+  }
+
+  function renderActionParams(a) {
+    if (a.params.length === 0) return '<p style="font-size:12px;color:#888780">No parameters needed.</p>';
+    let html = "";
+    if (a.params.includes("effort")) {
+      html += `<p style="font-size:12px;color:#5F5E5A;margin-bottom:8px">Effort per district (0 = skip):</p>
+        <div id="effort-rows-${a.type}"></div>`;
+    }
+    if (a.params.includes("gain")) {
+      html += `<div class="range-row" style="margin-top:8px">
+        <span class="range-label">Persuasion gain</span>
+        <input type="range" min="0" max="1" step="0.05" value="0.3" id="gain-${a.type}"
+          oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2); updateJSON()">
+        <span class="range-val">0.30</span></div>`;
+    }
+    if (a.params.includes("base_cost")) {
+      html += `<div class="range-row">
+        <span class="range-label">Base alienation cost</span>
+        <input type="range" min="0" max="1" step="0.05" value="0.25" id="base_cost-${a.type}"
+          oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2); updateJSON()">
+        <span class="range-val">0.25</span></div>`;
+    }
+    if (a.params.includes("reputational_cost")) {
+      html += `<div class="range-row">
+        <span class="range-label">Reputational cost</span>
+        <input type="range" min="0" max="0.5" step="0.05" value="0.1" id="rep_cost-${a.type}"
+          oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2); updateJSON()">
+        <span class="range-val">0.10</span></div>`;
+    }
+    if (a.params.includes("sigma_factor")) {
+      html += `<div class="range-row">
+        <span class="range-label">Uncertainty reduction</span>
+        <input type="range" min="0.1" max="1.0" step="0.05" value="0.5" id="sigma-${a.type}"
+          oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2); updateJSON()">
+        <span class="range-val">0.50</span></div>
+        <p class="hint">0.5 = halve perceived polling uncertainty</p>`;
+    }
+    if (a.params.includes("endorsee")) {
+      html += `<div class="field" style="margin-bottom:8px;max-width:200px">
+        <label>Endorse candidate</label>
+        <select id="endorsee-${a.type}" onchange="updateJSON()">
+          <option value="">— pick —</option>
+        </select></div>`;
+    }
+    if (a.params.includes("base_transfer")) {
+      html += `<div class="range-row">
+        <span class="range-label">Transfer rate</span>
+        <input type="range" min="0" max="1" step="0.05" value="0.6" id="transfer-${a.type}"
+          oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2); updateJSON()">
+        <span class="range-val">0.60</span></div>`;
+    }
+    return html;
+  }
+
+  function toggleActionParams(type) {
+    const cb = document.getElementById("act-" + type);
+    const params = document.getElementById("params-" + type);
+    params.classList.toggle("visible", cb.checked);
+    updateActionEffortRows();
+  }
+
+  function updateActionEffortRows() {
+    ["allocate","mobilise"].forEach(type => {
+      const container = document.getElementById("effort-rows-" + type);
+      if (!container) return;
+      container.innerHTML = "";
+      if (districts.length === 0) {
+        container.innerHTML = '<p style="font-size:12px;color:#888780">Add districts first.</p>';
+        return;
+      }
+      districts.forEach(d => {
+        container.innerHTML += `
+          <div class="range-row">
+            <span class="range-label">${d.name}</span>
+            <input type="range" min="0" max="20" step="1" value="0" id="effort-${type}-${d.name}"
+              oninput="this.nextElementSibling.textContent=parseInt(this.value); updateJSON()">
+            <span class="range-val">0</span>
+          </div>`;
+      });
+    });
+  }
+
+  function updateEndorseeSelects() {
+    const sel = document.getElementById("endorsee-endorse");
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— pick —</option>';
+    candidates.forEach(c => {
+      sel.innerHTML += `<option value="${c.name}" ${c.name === current ? 'selected' : ''}>${c.name}</option>`;
+    });
+  }
+
+  function buildJSON() {
+    const actor = document.getElementById("actor-select").value;
+    const threshold = parseInt(document.getElementById("threshold").value) || 0;
+    const nSims = parseInt(document.getElementById("n-sims").value) || 600;
+    const kappa = parseFloat(document.getElementById("kappa").value) || 0.05;
+
+    const candidatePositions = {};
+    const candidateValences = {};
+    candidates.forEach(c => {
+      candidatePositions[c.name] = c.position;
+      candidateValences[c.name] = c.valence;
+    });
+
+    const districtData = districts.map(d => ({
+      id: d.name,
+      electorate: d.electorate,
+      turnout: d.turnout,
+      region: d.region || null,
+      segments: {
+        left: d.left / 100,
+        centre: d.centre / 100,
+        right: d.right / 100,
+      }
+    }));
+
+    const actions = [];
+    ACTION_DEFS.forEach(a => {
+      const cb = document.getElementById("act-" + a.type);
+      if (!cb || !cb.checked) return;
+      const action = { type: a.type, actor, label: a.type, params: {} };
+      if (a.params.includes("effort")) {
+        const effort = {};
+        districts.forEach(d => {
+          const el = document.getElementById(`effort-${a.type}-${d.name}`);
+          if (el) effort[d.name] = parseInt(el.value) || 0;
+        });
+        action.params.effort = effort;
+      }
+      if (a.params.includes("gain")) {
+        const el = document.getElementById(`gain-${a.type}`);
+        if (el) action.params.gain = parseFloat(el.value);
+      }
+      if (a.params.includes("base_cost")) {
+        const el = document.getElementById(`base_cost-${a.type}`);
+        if (el) action.params.base_cost = parseFloat(el.value);
+      }
+      if (a.params.includes("reputational_cost")) {
+        const el = document.getElementById(`rep_cost-${a.type}`);
+        if (el) action.reputational_cost = parseFloat(el.value);
+      }
+      if (a.params.includes("sigma_factor")) {
+        const el = document.getElementById(`sigma-${a.type}`);
+        if (el) action.params.sigma_factor = parseFloat(el.value);
+      }
+      if (a.params.includes("endorsee")) {
+        const el = document.getElementById(`endorsee-${a.type}`);
+        if (el) action.params.endorsee = el.value;
+      }
+      if (a.params.includes("base_transfer")) {
+        const el = document.getElementById(`transfer-${a.type}`);
+        if (el) action.params.base_transfer = parseFloat(el.value);
+      }
+      actions.push(action);
+    });
+
+    const weights = {
+      w_seats: parseFloat(document.getElementById("w-seats").value),
+      w_majority: parseFloat(document.getElementById("w-majority").value),
+      w_vote: parseFloat(document.getElementById("w-vote").value),
+    };
+
+    const risk = {
+      lambda_risk: parseFloat(document.getElementById("lambda-risk").value),
+      metric: document.getElementById("risk-metric").value,
+    };
+
+    return {
+      actor,
+      candidates: candidates.map(c => c.name),
+      candidate_positions: candidatePositions,
+      candidate_valences: candidateValences,
+      governing_threshold: threshold,
+      n_simulations: nSims,
+      kappa,
+      districts: districtData,
+      actions,
+      weights,
+      risk,
+    };
+  }
+
+  function updateJSON() {
+    const out = document.getElementById("json-output");
+    try {
+      out.textContent = JSON.stringify(buildJSON(), null, 2);
+    } catch(e) {
+      out.textContent = "// error: " + e.message;
+    }
+    updateEndorseeSelects();
+  }
+
+  function copyJSON() {
+    const text = document.getElementById("json-output").textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const confirm = document.getElementById("copy-confirm");
+      confirm.style.display = "inline";
+      setTimeout(() => confirm.style.display = "none", 2000);
+    });
+  }
+
+  function goToResults() {
+    sessionStorage.setItem("fptp_config", JSON.stringify(buildJSON()));
+    window.location.href = "fptp_dashboard.html";
+  }
+
+  // Init
+  renderActions();
+  addCandidate(); addCandidate(); addCandidate();
+  addDistrict();
+  document.getElementById("actor-select").value = candidates[1]?.name || "";
+  updateJSON();
+</script>
+</body>
+</html>
