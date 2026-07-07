@@ -80,6 +80,7 @@ enum PersonType {
   ACTIVIST
   CAMPAIGN_TEAM
   PUBLIC_OFFICIAL
+  LOBBYIST
   OTHER
 }
 
@@ -96,6 +97,11 @@ enum OrganisationType {
   PUBLIC_BODY
   COMMUNITY_ORGANISATION
   DONOR_ORGANISATION
+  NON_PARTY_CAMPAIGNER
+  TRADE_ASSOCIATION
+  LOBBYING_FIRM
+  FUNDING_VEHICLE
+  FINANCIAL_INSTITUTION
   OTHER
 }
 
@@ -220,6 +226,9 @@ enum RelationshipType {
   LEANING_TOWARD_FACTION
   BROKER_FOR
   EVIDENCED_BY
+  LOBBIES
+  CAMPAIGNS_ON
+  MOBILISES
   OTHER
 }
 
@@ -273,6 +282,7 @@ enum SourceType {
   DOCUMENT
   MANUAL_ENTRY
   MODEL_INFERENCE
+  MARKET_DATA
   OTHER
 }
 
@@ -313,6 +323,7 @@ enum EventType {
   RELATIONSHIP_UPDATE
   RISK_UPDATE
   ACTION_COMPLETED
+  MARKET_REACTION
   OTHER
 }
 
@@ -528,6 +539,18 @@ enum ComplianceFlagStatus {
   RESOLVED
 }
 
+enum MarketSignalType {
+  GOVERNMENT_BOND_YIELD   // e.g. gilt yields (UK), Treasury yields (US)
+  EQUITY_INDEX            // e.g. FTSE 100, S&P 500
+  FX_RATE                 // e.g. GBP/USD
+  CREDIT_SPREAD           // sovereign/corporate CDS or spread
+  POLICY_RATE             // central bank policy rate
+  INFLATION_EXPECTATION   // breakevens, swaps
+  COMMODITY               // e.g. Brent, gas
+  VOLATILITY_INDEX        // e.g. VIX, MOVE
+  OTHER
+}
+
 // =============================================================================
 // BASE ENTITY
 // =============================================================================
@@ -604,6 +627,9 @@ model PersonProfile {
   riskLevel             InfluenceLevel @default(UNKNOWN)
   confidence            Confidence  @default(LOW)
   sourceSummary         String?
+  // transferability: which polity this actor belongs to, and which register resolved it
+  jurisdiction          String?     @default("UK") // ISO country / polity code; lets models trained on UK transfer by jurisdiction
+  sourceRegister        String?     // resolving register, e.g. "UK_PARLIAMENT", "UK_EC", "US_FEC"
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
 
@@ -611,6 +637,7 @@ model PersonProfile {
   @@index([primaryOrganisationId])
   @@index([primaryConstituencyId])
   @@index([primaryFactionId])
+  @@index([jurisdiction])
 }
 
 model OrganisationProfile {
@@ -628,12 +655,16 @@ model OrganisationProfile {
   politicalRelevance   InfluenceLevel   @default(UNKNOWN)
   riskLevel            InfluenceLevel   @default(UNKNOWN)
   confidence           Confidence       @default(LOW)
+  // transferability: which polity this actor belongs to, and which register resolved it
+  jurisdiction         String?          @default("UK") // ISO country / polity code; lets models trained on UK transfer by jurisdiction
+  sourceRegister       String?          // resolving register, e.g. "UK_EC", "UK_COMPANIES_HOUSE", "UK_ORCL", "US_FEC"
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
 
   @@index([organisationType])
   @@index([primaryConstituencyId])
   @@index([parentOrganisationId])
+  @@index([jurisdiction])
 }
 
 model ConstituencyProfile {
@@ -960,6 +991,47 @@ model Score {
   @@index([scoreType])
   @@index([subjectEntityId, scoreType])
   @@index([subjectEntityId, contextEntityId, scoreType])
+}
+
+// =============================================================================
+// MARKET / MACRO SIGNAL LAYER
+// -----------------------------------------------------------------------------
+// Markets are NOT entities (no identity, no agency, cannot be an end of a
+// Relationship). They are exogenous signal. Each row is one observation of one
+// series at one time, stored bitemporally so training samples can ask "what did
+// the market look like as known at date T" without leakage — mirroring the
+// point-in-time discipline used elsewhere in Arrow's feature store.
+//
+// `seriesCode` is deliberately free-text (e.g. "UK_GILT_10Y", "FTSE_100",
+// "GBPUSD"), not an enum: adding a new instrument must not require a migration.
+// `seriesType` gives typed grouping; `jurisdiction` carries transferability.
+//
+// A market move that is politically meaningful (e.g. the 2022 gilt spike) is
+// recorded as a PoliticalEvent of type MARKET_REACTION and linked to the
+// triggering policy/actor via its soft pointers + EventParticipant. The numeric
+// series lives here and is joined to that event by (seriesCode, time) in the
+// service layer — consistent with the relational-as-graph design (decision #2).
+// =============================================================================
+
+model MarketSignal {
+  id               String           @id @default(uuid())
+  seriesCode       String           // stable instrument code, e.g. "UK_GILT_10Y"
+  seriesType       MarketSignalType @default(OTHER)
+  jurisdiction     String?          @default("UK") // ISO country / polity code
+  value            Float
+  unit             String?          // e.g. "percent", "bps", "index", "rate"
+  observedAt       DateTime         // event time — when the market printed this
+  ingestedAt       DateTime         @default(now()) // observability time — when we recorded it
+  source           SourceType       @default(MARKET_DATA)
+  sourceEvidenceId String?          // soft pointer -> EvidenceSource
+  metadata         Json?
+
+  @@unique([seriesCode, observedAt])
+  @@index([seriesCode])
+  @@index([seriesType])
+  @@index([observedAt])
+  @@index([seriesCode, observedAt])
+  @@index([jurisdiction])
 }
 
 // =============================================================================
