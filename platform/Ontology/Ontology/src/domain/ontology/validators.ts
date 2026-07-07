@@ -44,6 +44,7 @@ import {
   ActionStatus,
   ApprovalRequirement,
   ComplianceFlagType,
+  MarketSignalType,
 } from './enums.js';
 
 const uuid = z.string().uuid();
@@ -183,6 +184,18 @@ export const createScoreSchema = z.object({
   rationale: z.string().optional(),
 });
 
+export const createMarketSignalSchema = z.object({
+  seriesCode: z.string().min(1).max(64),
+  seriesType: z.nativeEnum(MarketSignalType).optional(),
+  jurisdiction: z.string().max(64).optional(),
+  value: z.number(),
+  unit: z.string().max(32).optional(),
+  observedAt: z.coerce.date(),
+  source: z.nativeEnum(SourceType).optional(),
+  sourceEvidenceId: uuid.optional(),
+  metadata: jsonValue.optional(),
+});
+
 export const saveFptpScenarioSchema = z.object({
   constituencyEntityId: uuid,
   candidateEntityId: uuid.optional(),
@@ -270,6 +283,8 @@ export const personProfileSchema = z.object({
   riskLevel: z.nativeEnum(InfluenceLevel).optional(),
   confidence: z.nativeEnum(Confidence).optional(),
   sourceSummary: z.string().optional(),
+  jurisdiction: z.string().max(64).optional(),
+  sourceRegister: z.string().max(128).optional(),
 });
 
 export const organisationProfileSchema = z.object({
@@ -283,6 +298,8 @@ export const organisationProfileSchema = z.object({
   politicalRelevance: z.nativeEnum(InfluenceLevel).optional(),
   riskLevel: z.nativeEnum(InfluenceLevel).optional(),
   confidence: z.nativeEnum(Confidence).optional(),
+  jurisdiction: z.string().max(64).optional(),
+  sourceRegister: z.string().max(128).optional(),
 });
 
 export const constituencyProfileSchema = z.object({

@@ -52,6 +52,7 @@ export const PersonType = {
   ACTIVIST: 'ACTIVIST',
   CAMPAIGN_TEAM: 'CAMPAIGN_TEAM',
   PUBLIC_OFFICIAL: 'PUBLIC_OFFICIAL',
+  LOBBYIST: 'LOBBYIST',
   OTHER: 'OTHER',
 } as const;
 export type PersonType = (typeof PersonType)[keyof typeof PersonType];
@@ -69,6 +70,11 @@ export const OrganisationType = {
   PUBLIC_BODY: 'PUBLIC_BODY',
   COMMUNITY_ORGANISATION: 'COMMUNITY_ORGANISATION',
   DONOR_ORGANISATION: 'DONOR_ORGANISATION',
+  NON_PARTY_CAMPAIGNER: 'NON_PARTY_CAMPAIGNER',
+  TRADE_ASSOCIATION: 'TRADE_ASSOCIATION',
+  LOBBYING_FIRM: 'LOBBYING_FIRM',
+  FUNDING_VEHICLE: 'FUNDING_VEHICLE',
+  FINANCIAL_INSTITUTION: 'FINANCIAL_INSTITUTION',
   OTHER: 'OTHER',
 } as const;
 export type OrganisationType = (typeof OrganisationType)[keyof typeof OrganisationType];
@@ -203,6 +209,9 @@ export const RelationshipType = {
   LEANING_TOWARD_FACTION: 'LEANING_TOWARD_FACTION',
   BROKER_FOR: 'BROKER_FOR',
   EVIDENCED_BY: 'EVIDENCED_BY',
+  LOBBIES: 'LOBBIES',
+  CAMPAIGNS_ON: 'CAMPAIGNS_ON',
+  MOBILISES: 'MOBILISES',
   OTHER: 'OTHER',
 } as const;
 export type RelationshipType = (typeof RelationshipType)[keyof typeof RelationshipType];
@@ -262,9 +271,23 @@ export const SourceType = {
   DOCUMENT: 'DOCUMENT',
   MANUAL_ENTRY: 'MANUAL_ENTRY',
   MODEL_INFERENCE: 'MODEL_INFERENCE',
+  MARKET_DATA: 'MARKET_DATA',
   OTHER: 'OTHER',
 } as const;
 export type SourceType = (typeof SourceType)[keyof typeof SourceType];
+
+export const MarketSignalType = {
+  GOVERNMENT_BOND_YIELD: 'GOVERNMENT_BOND_YIELD',
+  EQUITY_INDEX: 'EQUITY_INDEX',
+  FX_RATE: 'FX_RATE',
+  CREDIT_SPREAD: 'CREDIT_SPREAD',
+  POLICY_RATE: 'POLICY_RATE',
+  INFLATION_EXPECTATION: 'INFLATION_EXPECTATION',
+  COMMODITY: 'COMMODITY',
+  VOLATILITY_INDEX: 'VOLATILITY_INDEX',
+  OTHER: 'OTHER',
+} as const;
+export type MarketSignalType = (typeof MarketSignalType)[keyof typeof MarketSignalType];
 
 export const Reliability = {
   LOW: 'LOW',
@@ -305,6 +328,7 @@ export const EventType = {
   RELATIONSHIP_UPDATE: 'RELATIONSHIP_UPDATE',
   RISK_UPDATE: 'RISK_UPDATE',
   ACTION_COMPLETED: 'ACTION_COMPLETED',
+  MARKET_REACTION: 'MARKET_REACTION',
   OTHER: 'OTHER',
 } as const;
 export type EventType = (typeof EventType)[keyof typeof EventType];

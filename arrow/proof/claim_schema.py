@@ -53,6 +53,15 @@ class ExtractedClaim:
     extractor_name: str
     extractor_version: str
     notes: str = ""
+    # Phase 4.5 ontology linkage — optional; empty when no snapshot exists or
+    # the actor/target strings did not resolve to an ontology entity.
+    actor_entity_id: Optional[str] = None
+    actor_entity_type: Optional[str] = None
+    target_entity_id: Optional[str] = None
+    target_entity_type: Optional[str] = None
+    linked_relationship_ids: list[str] = field(default_factory=list)
+    linked_event_ids: list[str] = field(default_factory=list)
+    linked_risk_ids: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -72,6 +81,13 @@ class ExtractedClaim:
             "extractor_name": self.extractor_name,
             "extractor_version": self.extractor_version,
             "notes": self.notes,
+            "actor_entity_id": self.actor_entity_id,
+            "actor_entity_type": self.actor_entity_type,
+            "target_entity_id": self.target_entity_id,
+            "target_entity_type": self.target_entity_type,
+            "linked_relationship_ids": self.linked_relationship_ids,
+            "linked_event_ids": self.linked_event_ids,
+            "linked_risk_ids": self.linked_risk_ids,
         }
 
     @classmethod
@@ -93,6 +109,13 @@ class ExtractedClaim:
             extractor_name=d.get("extractor_name", ""),
             extractor_version=d.get("extractor_version", ""),
             notes=d.get("notes", ""),
+            actor_entity_id=d.get("actor_entity_id"),
+            actor_entity_type=d.get("actor_entity_type"),
+            target_entity_id=d.get("target_entity_id"),
+            target_entity_type=d.get("target_entity_type"),
+            linked_relationship_ids=list(d.get("linked_relationship_ids") or []),
+            linked_event_ids=list(d.get("linked_event_ids") or []),
+            linked_risk_ids=list(d.get("linked_risk_ids") or []),
         )
 
 

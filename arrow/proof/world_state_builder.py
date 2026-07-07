@@ -17,6 +17,9 @@ from case_store import load_case_config
 from claim_schema import ExtractedClaim
 from claim_store import read_claims
 from evidence_store import read_evidence
+from ontology_resolver import OntologyResolver
+from ontology_schema import OntologySnapshot
+from ontology_store import read_ontology_snapshot
 from schemas import utc_now
 from world_state_schema import (
     ActorState,
@@ -52,13 +55,48 @@ def _mean(values: list[float]) -> float:
     return round(sum(values) / len(values), 3) if values else 0.0
 
 
-def _build_actor_states(claims: list[ExtractedClaim]) -> list[ActorState]:
-    by_actor: dict[str, list[ExtractedClaim]] = {}
+def _claim_entity_id(claim: ExtractedClaim, resolver: OntologyResolver | None) -> str | None:
+    """Ontology entity a claim's signal should be keyed under, if any.
+
+    Prefers the resolved acting entity; when the actor is unknown
+    ('unattributed'), the claim's pressure is attributed to the resolved
+    target entity — the entity the claim bears on.
+    """
+    if claim.actor_entity_id:
+        return claim.actor_entity_id
+    if resolver is not None:
+        actor_res = resolver.resolve(claim.actor)
+        if actor_res.resolved:
+            return actor_res.resolved_entity_id
+    if claim.target_entity_id:
+        return claim.target_entity_id
+    if resolver is not None:
+        target_res = resolver.resolve(claim.target_actor_or_org)
+        if target_res.resolved:
+            return target_res.resolved_entity_id
+    return None
+
+
+def _build_actor_states(
+    claims: list[ExtractedClaim],
+    snapshot: OntologySnapshot | None = None,
+) -> list[ActorState]:
+    resolver = OntologyResolver(snapshot) if snapshot is not None else None
+
+    # Group by ontology entity_id where possible; unresolved actors fall back
+    # to their raw actor string, exactly as before Phase 4.5.
+    by_key: dict[str, list[ExtractedClaim]] = {}
+    entity_keys: set[str] = set()
     for claim in claims:
-        by_actor.setdefault(claim.actor, []).append(claim)
+        entity_id = _claim_entity_id(claim, resolver)
+        if entity_id is not None:
+            by_key.setdefault(entity_id, []).append(claim)
+            entity_keys.add(entity_id)
+        else:
+            by_key.setdefault(claim.actor, []).append(claim)
 
     actors: list[ActorState] = []
-    for actor, group in sorted(by_actor.items()):
+    for key, group in sorted(by_key.items()):
         type_counts: dict[str, int] = {}
         for claim in group:
             type_counts[claim.claim_type] = type_counts.get(claim.claim_type, 0) + 1
@@ -72,8 +110,8 @@ def _build_actor_states(claims: list[ExtractedClaim]) -> list[ActorState]:
         ]
         pressure = round(min(1.0, max(0.0, sum(contributions) / len(group))), 3)
 
-        actors.append(ActorState(
-            actor=actor,
+        state = ActorState(
+            actor=key,
             claim_count=len(group),
             average_strength=_mean([c.strength for c in group]),
             average_confidence=_mean([c.confidence for c in group]),
@@ -81,7 +119,30 @@ def _build_actor_states(claims: list[ExtractedClaim]) -> list[ActorState]:
             supporting_claim_ids=[c.claim_id for c in group],
             pressure_score=pressure,
             notes="pressure = polarity-weighted mean of strength*confidence, clamped to [0,1]",
-        ))
+        )
+
+        if key in entity_keys and snapshot is not None:
+            entity = snapshot.entity_by_id(key)
+            if entity is not None:
+                state.actor = entity.name
+                state.entity_id = entity.entity_id
+                state.entity_type = entity.entity_type
+                state.name = entity.name
+                state.relationship_ids = [
+                    r.relationship_id for r in snapshot.relationships
+                    if key in (r.source_entity_id, r.target_entity_id)
+                ]
+                state.event_ids = [
+                    e.event_id for e in snapshot.events if key in e.entity_ids
+                ]
+                state.risk_ids = [
+                    r.risk_id for r in snapshot.risks if key in r.affected_entity_ids
+                ]
+                state.notes += (
+                    "; keyed by ontology entity — unattributed claims are "
+                    "attributed to the entity they bear on"
+                )
+        actors.append(state)
     return actors
 
 

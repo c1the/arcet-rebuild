@@ -26,6 +26,13 @@ class ActorState:
     supporting_claim_ids: list[str]
     pressure_score: float   # 0..1 heuristic: how much pressure bears on/through this actor
     notes: str = ""
+    # Phase 4.5 ontology linkage — empty/None for unresolved (fallback) actors.
+    entity_id: Optional[str] = None
+    entity_type: Optional[str] = None
+    name: str = ""
+    relationship_ids: list[str] = field(default_factory=list)
+    event_ids: list[str] = field(default_factory=list)
+    risk_ids: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -37,6 +44,12 @@ class ActorState:
             "supporting_claim_ids": self.supporting_claim_ids,
             "pressure_score": self.pressure_score,
             "notes": self.notes,
+            "entity_id": self.entity_id,
+            "entity_type": self.entity_type,
+            "name": self.name,
+            "relationship_ids": self.relationship_ids,
+            "event_ids": self.event_ids,
+            "risk_ids": self.risk_ids,
         }
 
 
@@ -101,6 +114,12 @@ class WorldState:
     top_claims: list[dict]           # [{claim_id, claim_type, weighted_score, text_span}]
     limitations: list[str] = field(default_factory=list)
     notes: str = ""
+    # Phase 4.5 ontology snapshot summary.
+    ontology_snapshot_used: bool = False
+    ontology_entity_count: int = 0
+    ontology_relationship_count: int = 0
+    ontology_event_count: int = 0
+    ontology_risk_count: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -117,6 +136,11 @@ class WorldState:
             "top_claims": self.top_claims,
             "limitations": self.limitations,
             "notes": self.notes,
+            "ontology_snapshot_used": self.ontology_snapshot_used,
+            "ontology_entity_count": self.ontology_entity_count,
+            "ontology_relationship_count": self.ontology_relationship_count,
+            "ontology_event_count": self.ontology_event_count,
+            "ontology_risk_count": self.ontology_risk_count,
         }
 
     @classmethod
@@ -135,6 +159,11 @@ class WorldState:
             top_claims=list(d.get("top_claims") or []),
             limitations=list(d.get("limitations") or []),
             notes=d.get("notes", ""),
+            ontology_snapshot_used=bool(d.get("ontology_snapshot_used", False)),
+            ontology_entity_count=int(d.get("ontology_entity_count") or 0),
+            ontology_relationship_count=int(d.get("ontology_relationship_count") or 0),
+            ontology_event_count=int(d.get("ontology_event_count") or 0),
+            ontology_risk_count=int(d.get("ontology_risk_count") or 0),
         )
 
 

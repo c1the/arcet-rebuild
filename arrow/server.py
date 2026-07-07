@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import anthropic
@@ -48,13 +49,16 @@ def _get_anthropic_client() -> anthropic.Anthropic:
 
 # ── Load public data once at startup ─────────────────────────────────────────
 
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+_DATA_ROOT = _PROJECT_ROOT / "data"
+
 _HOC_PATH = os.environ.get(
     "ARROW_HOC_PATH",
-    r"C:\Users\humph\OneDrive\Documents\arcet\data\HoC-GE2024-results-by-constituency.xlsx",
+    str(_DATA_ROOT / "HoC-GE2024-results-by-constituency.xlsx"),
 )
 _ONS_PATH = os.environ.get(
     "ARROW_ONS_PATH",
-    r"C:\Users\humph\OneDrive\Documents\arcet\data\ons_qualifications.csv",
+    str(_DATA_ROOT / "ons_qualifications.csv"),
 )
 
 try:

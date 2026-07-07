@@ -20,6 +20,9 @@ from claim_schema import ClaimExtractionReport, ExtractedClaim
 from claim_store import write_claims
 from claim_validation import validate_claims
 from evidence_store import read_evidence
+from ontology_resolver import OntologyResolver
+from ontology_schema import OntologySnapshot
+from ontology_store import read_ontology_snapshot
 from schemas import CaseConfig, EvidenceItem, utc_now
 
 REPORT_FILE = "claim_extraction_report.json"
@@ -180,6 +183,58 @@ class RuleBasedExtractor:
 
 
 # --------------------------------------------------------------------------
+# Ontology linkage (Phase 4.5)
+# --------------------------------------------------------------------------
+
+def _link_claim_to_ontology(
+    claim: ExtractedClaim,
+    resolver: OntologyResolver,
+    snapshot: OntologySnapshot,
+) -> None:
+    """Best-effort resolution of a claim's actor/target to ontology entities.
+
+    Never raises: an unresolved string leaves the claim exactly as the
+    extractor produced it, with a note recording that resolution was tried.
+    """
+    actor_res = resolver.resolve(claim.actor)
+    target_res = resolver.resolve(claim.target_actor_or_org)
+
+    resolved_ids: list[str] = []
+    if actor_res.resolved:
+        claim.actor_entity_id = actor_res.resolved_entity_id
+        claim.actor_entity_type = actor_res.resolved_entity_type
+        resolved_ids.append(actor_res.resolved_entity_id)
+    if target_res.resolved:
+        claim.target_entity_id = target_res.resolved_entity_id
+        claim.target_entity_type = target_res.resolved_entity_type
+        resolved_ids.append(target_res.resolved_entity_id)
+
+    # Link the snapshot objects that involve any resolved claim entity.
+    if resolved_ids:
+        wanted = set(resolved_ids)
+        claim.linked_relationship_ids = [
+            r.relationship_id for r in snapshot.relationships
+            if r.source_entity_id in wanted or r.target_entity_id in wanted
+        ]
+        claim.linked_event_ids = [
+            e.event_id for e in snapshot.events
+            if wanted.intersection(e.entity_ids)
+        ]
+        claim.linked_risk_ids = [
+            r.risk_id for r in snapshot.risks
+            if wanted.intersection(r.affected_entity_ids)
+        ]
+
+    note = (
+        f"ontology: actor {actor_res.method}"
+        + (f" -> {actor_res.resolved_entity_id}" if actor_res.resolved else "")
+        + f", target {target_res.method}"
+        + (f" -> {target_res.resolved_entity_id}" if target_res.resolved else "")
+    )
+    claim.notes = f"{claim.notes}; {note}" if claim.notes else note
+
+
+# --------------------------------------------------------------------------
 # Pipeline
 # --------------------------------------------------------------------------
 
@@ -195,6 +250,14 @@ def extract_case(case_dir: Path, extractor: ClaimExtractor | None = None) -> Cla
         claims.extend(extractor.extract(item, config))
     for index, claim in enumerate(claims, start=1):
         claim.claim_id = f"cl-{index:04d}"
+
+    # Phase 4.5: link claims to the case's ontology snapshot when one exists.
+    # Resolution failures never fail extraction — claims stay as extracted.
+    snapshot = read_ontology_snapshot(case_dir)
+    if snapshot is not None:
+        resolver = OntologyResolver(snapshot)
+        for claim in claims:
+            _link_claim_to_ontology(claim, resolver, snapshot)
 
     issues = validate_claims(
         claims, config.forecast_cutoff,

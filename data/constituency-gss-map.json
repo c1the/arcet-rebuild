@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "purpose": "Demo alias mapping from fictional backend constituencies to real UK constituency GSS codes",
+    "joinKey": "Entity.metadata.gssCode",
+    "notFinalModel": true,
+    "approved": "2026-07-01 — Real GIS Phase 2a recommendation approved",
+    "source": "frontend/data/constituency-intel-2024.json (HoC GE2024 results by constituency)"
+  },
+  "mappings": [
+    {
+      "backendName": "Northbridge",
+      "gssCode": "E14001131",
+      "realName": "Bristol Central",
+      "reason": "Default map-selected seat — the demo lights up on first load; nationally recognisable Green-gain result with the highest turnout (69.1%) and a strong 'politically interesting' narrative."
+    },
+    {
+      "backendName": "Easthaven",
+      "gssCode": "E14001279",
+      "realName": "Hendon",
+      "reason": "The tightest gain in the UK (majority 15, 0.0%) — a genuine toss-up that flipped, matching Easthaven's seeded TARGET status and giving maximum marginal contrast."
+    },
+    {
+      "backendName": "Westfield",
+      "gssCode": "E14001113",
+      "realName": "Bootle",
+      "reason": "Highest genuine majority in the country (21,983 · 56.5%) — the archetypal fortress seat, matching Westfield's seeded LONG_SHOT status for clean safe-seat contrast."
+    }
+  ]
+}
